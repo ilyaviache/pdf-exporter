@@ -48,6 +48,9 @@ function processHtml(inputPath, outputPath, imageFolderPath) {
 
   $('head').append(`<style>${fontStyles}</style>`);
 
+  // Extract DOI
+  const doi = $('meta[name="doi"]').attr('content') || 'S0367676524010029'; // Default value if not found
+
   // Convert images to base64 and embed them
   $('img').each((i, img) => {
     const src = $(img).attr('src');
@@ -69,6 +72,9 @@ function processHtml(inputPath, outputPath, imageFolderPath) {
   // Save the modified HTML
   fs.writeFileSync(outputPath, $.html(), 'utf8');
   console.log(`HTML processed and saved to ${outputPath}`);
+
+  // Return metadata
+  return { doi };
 }
 
 export default processHtml;

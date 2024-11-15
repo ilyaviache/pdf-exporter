@@ -55,8 +55,8 @@ async function processSingleFolder(inputDir, outputDir, browser) {
     const processedHtmlPath = path.join(outputDir, `${path.basename(item, '.html')}.html`);
     const outputPdfPath = path.join(outputDir, `${path.basename(item, '.html')}.pdf`);
 
-    processHtml(inputPath, processedHtmlPath, path.join(inputDir, 'images'));
-    await convertToPdf(processedHtmlPath, outputPdfPath, browser);
+    const meta = processHtml(inputPath, processedHtmlPath, path.join(inputDir, 'images'));
+    await convertToPdf(processedHtmlPath, outputPdfPath, browser, meta);
   }
 }
 
@@ -102,8 +102,4 @@ async function main() {
   console.log('Processing complete!');
 }
 
-// Start the script
-main().catch(err => {
-  console.error('Error:', err);
-  process.exit(1);
-});
+main().catch(console.error);

@@ -1,6 +1,6 @@
 import puppeteer from 'puppeteer';
 
-async function convertToPdf(htmlPath, outputPdfPath, browser) {
+async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
   const page = await browser.newPage();
   await page.goto(`file://${htmlPath}`, { waitUntil: 'networkidle0' });
   
@@ -46,6 +46,8 @@ async function convertToPdf(htmlPath, outputPdfPath, browser) {
       left: '30px',
     }
   };
+
+  console.log(`Processing PDF with DOI: ${meta.doi}`);
 
   await page.pdf(pdfOptions);
   await page.close();
