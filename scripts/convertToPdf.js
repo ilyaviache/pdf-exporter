@@ -47,7 +47,7 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
     }
   };
 
-  console.log(`Processing PDF with DOI: ${meta.doi}`);
+  //console.log(`Processing PDF with DOI: ${meta.doi}`);
 
   await page.pdf(pdfOptions);
   await page.close();
