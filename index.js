@@ -8,19 +8,20 @@ import puppeteer from 'puppeteer';
 const BATCH_SIZE = 8; // Number of folders to process concurrently
 
 function getValidItems(inputDir) {
-  // First check if inputDir is actually a directory
   if (!fs.lstatSync(inputDir).isDirectory()) {
     console.warn(`Skipping ${inputDir} as it's not a directory`);
     return [];
   }
 
   return fs.readdirSync(inputDir).filter(item => {
-    // Skip hidden files (starting with .)
-    if (item.startsWith('.')) return false;
+    // Skip hidden files, images folder, and init_images folder
+    if (item.startsWith('.') || 
+        item === 'images' || 
+        item === 'init_images') return false;
     
     const fullPath = path.join(inputDir, item);
-    // Include directories and .html files, exclude others
-    return fs.lstatSync(fullPath).isDirectory() || path.extname(fullPath) === '.html';
+    // Only include .html files, exclude directories and other files
+    return path.extname(fullPath) === '.html';
   });
 }
 
@@ -50,20 +51,14 @@ async function processSingleFolder(inputDir, outputDir, browser) {
 
   for (const item of items) {
     const inputPath = path.join(inputDir, item);
-    const outputPath = path.join(outputDir, item);
+    // We don't need to check for directories anymore since getValidItems only returns .html files
+    const processedHtmlPath = path.join(outputDir, `${path.basename(item, '.html')}.html`);
+    const outputPdfPath = path.join(outputDir, `${path.basename(item, '.html')}.pdf`);
 
-    if (fs.lstatSync(inputPath).isDirectory()) {
-      await processSingleFolder(inputPath, outputPath, browser);
-    } else if (path.extname(inputPath) === '.html') {
-      const processedHtmlPath = path.join(outputDir, `${path.basename(item, '.html')}.html`);
-      const outputPdfPath = path.join(outputDir, `${path.basename(item, '.html')}.pdf`);
-
-      processHtml(inputPath, processedHtmlPath, path.join(inputDir, 'images'));
-      await convertToPdf(processedHtmlPath, outputPdfPath, browser);
-    }
+    processHtml(inputPath, processedHtmlPath, path.join(inputDir, 'images'));
+    await convertToPdf(processedHtmlPath, outputPdfPath, browser);
   }
 }
-
 
 // Main function to process all folders in batches
 async function main() {

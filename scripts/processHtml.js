@@ -8,7 +8,7 @@ function processHtml(inputPath, outputPath, imageFolderPath) {
 
   // Example: Update styles
   // $('h1').text('Updated Title');
-  $('p').css('color', 'blue');
+  // $('p').css('color', 'blue');
 
   // Convert images to base64 and embed them
   $('img').each((i, img) => {
