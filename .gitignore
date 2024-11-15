@@ -1,0 +1,45 @@
+# Node.js dependencies
+node_modules/
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Logs
+logs/
+*.log
+*.log.*
+log/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Output folders
+output/*
+dist/
+build/
+
+# Temporary files
+*.tmp
+*.swp
+*~
+*.bak
+*.backup
+
+# IDE/Editor files
+.idea/
+.vscode/
+*.code-workspace
+
+# Puppeteer related
+.puppeteer/
+.DS_Store
+input-html/*
