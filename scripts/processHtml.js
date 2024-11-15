@@ -9,6 +9,10 @@ function processHtml(inputPath, outputPath, imageFolderPath) {
   // Add fonts to head section
   const fontStyles = `
     @font-face {
+      font-family: 'NewtonC-Bold';
+      src: url('data:font/opentype;base64,${fs.readFileSync('./fonts/NEWTONC-BOLD.OTF', 'base64')}') format('opentype');
+    }
+    @font-face {
       font-family: 'NewtonC-BoldItalic';
       src: url('data:font/opentype;base64,${fs.readFileSync('./fonts/NEWTONC-BOLDITALIC.OTF', 'base64')}') format('opentype');
     }
@@ -17,12 +21,28 @@ function processHtml(inputPath, outputPath, imageFolderPath) {
       src: url('data:font/opentype;base64,${fs.readFileSync('./fonts/NEWTONC-ITALIC.OTF', 'base64')}') format('opentype');
     }
     @font-face {
-      font-family: 'NewtonC-Bold';
-      src: url('data:font/opentype;base64,${fs.readFileSync('./fonts/NEWTONC-BOLD.OTF', 'base64')}') format('opentype');
-    }
-    @font-face {
       font-family: 'NewtonC';
       src: url('data:font/opentype;base64,${fs.readFileSync('./fonts/NEWTONC.OTF', 'base64')}') format('opentype');
+    }
+    @font-face {
+      font-family: 'Newton-Bold';
+      src: url('data:font/opentype;base64,${fs.readFileSync('./fonts/NEWTON-BOLD.OTF', 'base64')}') format('opentype');
+    }
+    @font-face {
+      font-family: 'Newton-BoldItalic';
+      src: url('data:font/opentype;base64,${fs.readFileSync('./fonts/NEWTON-BOLDITALIC.OTF', 'base64')}') format('opentype');
+    }
+    @font-face {
+      font-family: 'Newton-ExtraBold';
+      src: url('data:font/opentype;base64,${fs.readFileSync('./fonts/NEWTON-EXTRABOLD.OTF', 'base64')}') format('opentype');
+    }
+    @font-face {
+      font-family: 'Newton-Italic';
+      src: url('data:font/opentype;base64,${fs.readFileSync('./fonts/NEWTON-ITALIC.OTF', 'base64')}') format('opentype');
+    }
+    @font-face {
+      font-family: 'Newton-Regular';
+      src: url('data:font/opentype;base64,${fs.readFileSync('./fonts/NEWTON-REGULAR.OTF', 'base64')}') format('opentype');
     }
   `;
 
