@@ -8,13 +8,21 @@ import puppeteer from 'puppeteer';
 const BATCH_SIZE = 8; // Number of folders to process concurrently
 
 function getValidItems(inputDir) {
+  // First check if inputDir is actually a directory
+  if (!fs.lstatSync(inputDir).isDirectory()) {
+    console.warn(`Skipping ${inputDir} as it's not a directory`);
+    return [];
+  }
+
   return fs.readdirSync(inputDir).filter(item => {
+    // Skip hidden files (starting with .)
+    if (item.startsWith('.')) return false;
+    
     const fullPath = path.join(inputDir, item);
     // Include directories and .html files, exclude others
     return fs.lstatSync(fullPath).isDirectory() || path.extname(fullPath) === '.html';
   });
 }
-
 
 // Helper function to clear the output folder
 function clearOutputFolder(folderPath) {
@@ -65,12 +73,23 @@ async function main() {
   // Clear the output directory
   clearOutputFolder(outputDir);
 
-  const folders = fs.readdirSync(inputDir).map(folder => ({
-    input: path.join(inputDir, folder),
-    output: path.join(outputDir, folder),
-  }));
+  const folders = fs.readdirSync(inputDir)
+    .filter(folder => {
+      const fullPath = path.join(inputDir, folder);
+      // Skip hidden files and non-directories
+      return !folder.startsWith('.') && fs.lstatSync(fullPath).isDirectory();
+    })
+    .map(folder => ({
+      input: path.join(inputDir, folder),
+      output: path.join(outputDir, folder),
+    }));
 
-  const browser = await puppeteer.launch(); // Reuse a single browser instance
+  if (folders.length === 0) {
+    console.log('No valid folders found to process');
+    return;
+  }
+
+  const browser = await puppeteer.launch();
 
   try {
     await pMap(
@@ -82,7 +101,7 @@ async function main() {
       { concurrency: BATCH_SIZE }
     );
   } finally {
-    await browser.close(); // Ensure the browser is closed
+    await browser.close();
   }
 
   console.log('Processing complete!');
