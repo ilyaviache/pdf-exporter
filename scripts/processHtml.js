@@ -6,9 +6,27 @@ function processHtml(inputPath, outputPath, imageFolderPath) {
   const html = fs.readFileSync(inputPath, 'utf8');
   const $ = cheerio.load(html);
 
-  // Example: Update styles
-  // $('h1').text('Updated Title');
-  // $('p').css('color', 'blue');
+  // Add fonts to head section
+  const fontStyles = `
+    @font-face {
+      font-family: 'NewtonC-BoldItalic';
+      src: url('data:font/opentype;base64,${fs.readFileSync('./fonts/NEWTONC-BOLDITALIC.OTF', 'base64')}') format('opentype');
+    }
+    @font-face {
+      font-family: 'NewtonC-Italic';
+      src: url('data:font/opentype;base64,${fs.readFileSync('./fonts/NEWTONC-ITALIC.OTF', 'base64')}') format('opentype');
+    }
+    @font-face {
+      font-family: 'NewtonC-Bold';
+      src: url('data:font/opentype;base64,${fs.readFileSync('./fonts/NEWTONC-BOLD.OTF', 'base64')}') format('opentype');
+    }
+    @font-face {
+      font-family: 'NewtonC';
+      src: url('data:font/opentype;base64,${fs.readFileSync('./fonts/NEWTONC.OTF', 'base64')}') format('opentype');
+    }
+  `;
+
+  $('head').append(`<style>${fontStyles}</style>`);
 
   // Convert images to base64 and embed them
   $('img').each((i, img) => {
