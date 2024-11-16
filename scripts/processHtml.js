@@ -127,7 +127,7 @@ function processHtml(inputPath, outputPath, imageFolderPath) {
       padding-left: 110px;
       padding-top: 20px;
       font-size: 17px;
-      font-family: NewtonC-Bold;
+      font-family: Newton-Bold;
     }
 
     #preview-content .author {
@@ -137,7 +137,7 @@ function processHtml(inputPath, outputPath, imageFolderPath) {
     #preview-content .author > p > span, #setText .author > p > span {
       text-align: left !important;
       font-size: 14px;
-      font-family: NewtonC;
+      font-family: Newton-Regular;
       margin-bottom: 5px;
     }
 
@@ -147,7 +147,7 @@ function processHtml(inputPath, outputPath, imageFolderPath) {
 
     #preview-content div.author span:first-child cdiv {
       font-size: 16px;
-      font-family: NewtonC-Bold;
+      font-family: Newton-Bold;
     }
 
     #preview-content .author > p > span:first-child {
@@ -156,7 +156,7 @@ function processHtml(inputPath, outputPath, imageFolderPath) {
     }
 
     .abstract_span, .bold {
-      font-family: 'NewtonC-Bold' !important;
+      font-family: 'Newton-Bold' !important;
     }
   `;
   // Remove existing style tag if it exists
