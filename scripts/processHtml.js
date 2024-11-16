@@ -126,7 +126,7 @@ function processHtml(inputPath, outputPath, imageFolderPath) {
     #preview-content .main-title {
       padding-left: 114px;
       padding-top: 20px;
-      font-size: 17px;
+      font-size: 22px;
       font-family: Newton-Bold;
     }
 
@@ -136,7 +136,7 @@ function processHtml(inputPath, outputPath, imageFolderPath) {
 
     #preview-content .author > p > span, #setText .author > p > span {
       text-align: left !important;
-      font-size: 14px;
+      font-size: 12px;
       font-family: Newton-Regular;
       margin-bottom: 5px;
     }
@@ -157,6 +157,11 @@ function processHtml(inputPath, outputPath, imageFolderPath) {
 
     .abstract_span, .bold {
       font-family: 'Newton-Bold' !important;
+    }
+
+    #preview h1, #preview h2, #preview h3, #preview h4, #preview h5, #preview strong {
+      font-family: 'Newton-Bold' !important;
+      font-size: 18px !important;
     }
   `;
   // Remove existing style tag if it exists
