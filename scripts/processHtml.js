@@ -71,7 +71,7 @@ function processHtml(inputPath, outputPath, imageFolderPath) {
     /* General text content alignment and margin */
     #preview-content > * {
       text-align: left !important;
-      margin-left: 85px !important;
+      margin-left: 110px !important;
       text-align: justify !important;
     }
 
@@ -107,7 +107,7 @@ function processHtml(inputPath, outputPath, imageFolderPath) {
     }
 
     #preview-content .abstract {
-      width: 87% !important;
+      width: 85% !important;
       margin-top: -5px !important;
     }
 
@@ -121,18 +121,17 @@ function processHtml(inputPath, outputPath, imageFolderPath) {
     #preview-content .author, #preview-content .main-title {
       justify-content: flex-start !important;
       text-align: left !important;
-      padding-left: 86px;
     }
 
     #preview-content .main-title {
-      padding-left: 85px;
+      padding-left: 110px;
       padding-top: 20px;
       font-size: 17px;
       font-family: NewtonC-Bold;
     }
 
     #preview-content .author {
-      padding-left: 0px;
+      padding-left: 1px;
     }
 
     #preview-content .author > p > span, #setText .author > p > span {
