@@ -71,7 +71,7 @@ function processHtml(inputPath, outputPath, imageFolderPath) {
     /* General text content alignment and margin */
     #preview-content > * {
       text-align: left !important;
-      margin-left: 110px !important;
+      margin-left: 115px !important;
       text-align: justify !important;
     }
 
@@ -107,7 +107,7 @@ function processHtml(inputPath, outputPath, imageFolderPath) {
     }
 
     #preview-content .abstract {
-      width: 85% !important;
+      width: 84% !important;
       margin-top: -5px !important;
     }
 
@@ -124,7 +124,7 @@ function processHtml(inputPath, outputPath, imageFolderPath) {
     }
 
     #preview-content .main-title {
-      padding-left: 110px;
+      padding-left: 114px;
       padding-top: 20px;
       font-size: 17px;
       font-family: Newton-Bold;
@@ -223,6 +223,20 @@ function processHtml(inputPath, outputPath, imageFolderPath) {
         $(img).attr('src', `data:${mimeType};base64,${base64}`);
       } else {
         console.warn(`Image not found: ${resolvedPath}`);
+      }
+    }
+  });
+
+  // Add figure reference processing
+  $('#preview-content').find('*').contents().each(function() {
+    if (this.nodeType === 3) { // Text nodes only
+      const text = $(this).text();
+      const newText = text.replace(
+        /(Fig\.|Figure)\s*(\d+)(?:\s*\([a-z]\))?/gi,
+        '<span class="bold">$&</span>'
+      );
+      if (text !== newText) {
+        $(this).replaceWith(newText);
       }
     }
   });
