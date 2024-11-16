@@ -13,7 +13,8 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
     headerTemplate: `
       <div style="
         width: 100%;
-        padding: 20px 40px 10px;
+        padding: 10px 0px 10px;
+        margin: 0px 40px;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -28,7 +29,7 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
         <a href="${doiLink}" style="
           font-family: 'NewtonC';
           font-size: 11px;
-          color: #1779c4;
+          color: #000000;
           text-decoration: none;
         ">
           ${doiLink}
@@ -38,7 +39,8 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
     footerTemplate: `
       <div style="
         width: 100%;
-        padding: 10px 40px 20px;
+        padding: 10px 0px 10px;
+        margin: 0px 40px;
         display: flex;
         justify-content: space-between;
         border-top: 0.5px solid #d0d0d0;
