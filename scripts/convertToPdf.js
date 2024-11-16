@@ -5,6 +5,10 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
   await page.goto(`file://${htmlPath}`, { waitUntil: 'networkidle0' });
 
   const doiLink = 'https://doi.org/' + meta.doi;
+
+  const authorsHeader = meta.authors.length === 1 ? meta.authors[0] :
+    meta.authors.length === 2 ? `${meta.authors[0]}, ${meta.authors[1]}` :
+    `${meta.authors[0]}, ${meta.authors[1]}, et al.`;
   
   const pdfOptions = {
     path: outputPdfPath,
@@ -24,7 +28,7 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
           font-family: 'Newton-BoldItalic';
           font-size: 14px;
         ">
-          Article Name Here
+          ${authorsHeader}
         </span>
         <a href="${doiLink}" style="
           font-family: 'NewtonC';
@@ -49,7 +53,7 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
           font-family: 'Newton-Regular';
           font-size: 11px;
         ">
-          Science Journal Name
+          Physics of Metals and Metallography
         </span>
         <span style="
           font-family: 'Newton-Bold';
