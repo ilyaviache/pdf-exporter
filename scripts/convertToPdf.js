@@ -13,7 +13,7 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
     headerTemplate: `
       <div style="
         width: 100%;
-        padding: 10px 0px 10px;
+        padding: 0px 0px 10px;
         margin: 0px 40px;
         display: flex;
         justify-content: space-between;
@@ -22,7 +22,7 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
       ">
         <span style="
           font-family: 'Newton-BoldItalic';
-          font-size: 15px;
+          font-size: 14px;
         ">
           Article Name Here
         </span>
@@ -39,7 +39,7 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
     footerTemplate: `
       <div style="
         width: 100%;
-        padding: 10px 0px 10px;
+        padding: 10px 0px 0px;
         margin: 0px 40px;
         display: flex;
         justify-content: space-between;
