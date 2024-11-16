@@ -71,7 +71,12 @@ function processHtml(inputPath, outputPath, imageFolderPath) {
     /* General text content alignment and margin */
     #preview-content > * {
       text-align: left !important;
-      margin-left: 90px !important;
+      margin-left: 85px !important;
+      text-align: justify !important;
+    }
+
+    body {
+      font-family: NewtonC;
     }
 
     /* Reset margin and center alignment for images */
@@ -100,6 +105,13 @@ function processHtml(inputPath, outputPath, imageFolderPath) {
     #preview-content .abstract {
       text-align: justify !important;
     }
+
+    #preview-content .abstract {
+      width: 87% !important;
+      margin-top: -5px !important;
+    }
+
+
     
     #setText .main-title, #setText .author, #preview-content .main-title, #preview-content .author {
       text-align: left !important;
@@ -109,7 +121,14 @@ function processHtml(inputPath, outputPath, imageFolderPath) {
     #preview-content .author, #preview-content .main-title {
       justify-content: flex-start !important;
       text-align: left !important;
+      padding-left: 86px;
+    }
+
+    #preview-content .main-title {
       padding-left: 85px;
+      padding-top: 20px;
+      font-size: 17px;
+      font-family: NewtonC-Bold;
     }
 
     #preview-content .author {
@@ -118,6 +137,27 @@ function processHtml(inputPath, outputPath, imageFolderPath) {
 
     #preview-content .author > p > span, #setText .author > p > span {
       text-align: left !important;
+      font-size: 14px;
+      font-family: NewtonC;
+      margin-bottom: 5px;
+    }
+
+    #preview-content .author p, #setText .author p {
+      padding: 0px !important;
+    }
+
+    #preview-content div.author span:first-child cdiv {
+      font-size: 16px;
+      font-family: NewtonC-Bold;
+    }
+
+    #preview-content .author > p > span:first-child {
+      margin-bottom: 12px;
+      margin-top: 2px;
+    }
+
+    .abstract_span, .bold {
+      font-family: 'NewtonC-Bold' !important;
     }
   `;
   // Remove existing style tag if it exists
@@ -130,7 +170,21 @@ function processHtml(inputPath, outputPath, imageFolderPath) {
   $('#preview').css('background', '#f0f0f0');
 
   // Extract DOI
-  const doi = $('meta[name="doi"]').attr('content') || 'S0367676524010029'; // Default value if not found
+  const doiDiv = $('#preview-content > div:nth-child(4)'); // Get 4th child div of #preview-content
+  // const doi = doiDiv.text().match(/DOI:\s*(.*?)\s*,/)[1].slice(0, -4) + 'e' + doiDiv.text().match(/DOI:\s*(.*?)\s*,/)[1].slice(-3);
+
+  const originalText = doiDiv.text();
+  const doiMatch = originalText.match(/DOI:\s*(.*?)\s*,/);
+  const doiNumber = doiMatch[1];
+  const modifiedDoi = doiNumber.slice(0, -4) + 'e' + doiNumber.slice(-3);
+  
+  const newText = originalText.replace(
+    /DOI:\s*(.*?)\s*,/, 
+    `<span class="bold">DOI: </span>${modifiedDoi},`
+  );
+  doiDiv.html(newText);
+
+  const doi = modifiedDoi;
 
 
   // Select the abstract div
