@@ -2,6 +2,52 @@ import fs from 'fs';
 import * as cheerio from 'cheerio';
 import path from 'path';
 
+function extractSurnames(html) {
+  const $ = cheerio.load(html);
+  
+  // Find all first spans within author paragraphs
+  const authorSpans = $('.author > p > span:first-child');
+  
+  // Use Set to automatically handle duplicates
+  const uniqueSurnames = new Set();
+  
+  authorSpans.each((_, element) => {
+    const authorText = $(element).find('cdiv').text().trim();
+    
+    // Skip if empty
+    if (!authorText) return;
+    
+    // Remove the year and copyright symbol
+    const cleanText = authorText.replace(/©\s*\d{4}\s*,?\s*/, '');
+    
+    // Split by comma to separate authors (in case multiple in one span)
+    const authors = cleanText.split(',').map(author => author.trim());
+    
+    // Process each author
+    authors.forEach(author => {
+      // Skip if it's an institution or email
+      if (author.includes('@') || 
+          author.includes('University') || 
+          author.includes('Institute') ||
+          author.includes('Received') ||
+          author.includes('Revised') ||
+          author.includes('Accepted')) {
+        return;
+      }
+      
+      // Extract surname (last word before any special characters)
+      const words = author.split(' ');
+      const surname = words[words.length - 1].replace(/[^a-zA-Z]/g, '');
+      
+      if (surname) {
+        uniqueSurnames.add(surname);
+      }
+    });
+  });
+
+  return Array.from(uniqueSurnames);
+}
+
 function processHtml(inputPath, outputPath, imageFolderPath) {
   const html = fs.readFileSync(inputPath, 'utf8');
   const $ = cheerio.load(html);
@@ -167,6 +213,9 @@ function processHtml(inputPath, outputPath, imageFolderPath) {
   // Remove existing style tag if it exists
   // $('style').remove();
   
+  const authors = extractSurnames(html);
+  console.log('Authors:', authors); // For debugging
+
   // Add new style tag with combined styles at the end of HTML to override other styles
   $('body').append(`<style>${customStyles}</style>`);
 
@@ -251,7 +300,7 @@ function processHtml(inputPath, outputPath, imageFolderPath) {
   console.log(`HTML processed and saved to ${outputPath}`);
 
   // Return metadata
-  return { doi };
+  return { doi, authors };
 }
 
 export default processHtml;
