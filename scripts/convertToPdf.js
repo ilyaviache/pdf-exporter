@@ -21,8 +21,8 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
         border-bottom: 0.5px solid #d0d0d0;
       ">
         <span style="
-          font-family: 'NewtonC-BoldItalic';
-          font-size: 13px;
+          font-family: 'Newton-BoldItalic';
+          font-size: 15px;
         ">
           Article Name Here
         </span>
@@ -46,16 +46,22 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
         border-top: 0.5px solid #d0d0d0;
       ">
         <span style="
-          font-family: 'NewtonC';
+          font-family: 'Newton-Regular';
           font-size: 11px;
         ">
           Science Journal Name
         </span>
         <span style="
-          font-family: 'NewtonC-Bold';
+          font-family: 'Newton-Bold';
           font-size: 11px;
+          padding-right: 10px;
         ">
-          Nauka Publishers <span class="pageNumber"></span>
+          Nauka Publishers <span style="
+            font-family: 'Newton-Bold';
+            font-weight: bold;
+            font-size: 11px;
+            padding-left: 10px;
+          " class="pageNumber"></span>
         </span>
       </div>
     `,
