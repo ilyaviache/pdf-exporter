@@ -4,6 +4,7 @@ import pMap from 'p-map';
 import processHtml from './scripts/processHtml.js';
 import convertToPdf from './scripts/convertToPdf.js';
 import puppeteer from 'puppeteer';
+import { receiveMessages, deleteMessage } from './config/aws.js';
 
 const BATCH_SIZE = 8; // Number of folders to process concurrently
 
@@ -102,4 +103,35 @@ async function main() {
   console.log('Processing complete!');
 }
 
+// async function main2() {
+//   const browser = await puppeteer.launch({
+//     args: ['--no-sandbox', '--disable-setuid-sandbox']
+//   });
+
+//   try {
+//     while (true) {
+//       console.log('Waiting for messages...');
+      
+//       // Receive messages from SQS
+//       const messages = await receiveMessages(BATCH_SIZE);
+      
+//       if (messages.length === 0) {
+//         console.log('No messages to process');
+//         // Optional: Add delay before next polling
+//         await new Promise(resolve => setTimeout(resolve, 5000));
+//         continue;
+//       }
+
+//       console.log(`Received ${messages.length} messages`);
+//     }
+//   } catch (error) {
+//     console.error('Fatal error:', error);
+//   } finally {
+//     await browser.close();
+//   }
+// }
+
+
+
 main().catch(console.error);
+//main2().catch(console.error);
