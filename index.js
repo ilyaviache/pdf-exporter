@@ -5,6 +5,7 @@ import processHtml from './scripts/processHtml.js';
 import convertToPdf from './scripts/convertToPdf.js';
 import puppeteer from 'puppeteer';
 import { receiveMessages, deleteMessage } from './config/aws.js';
+import { PDFDocument } from 'pdf-lib';
 
 const BATCH_SIZE = 8; // Number of folders to process concurrently
 
@@ -92,66 +93,77 @@ async function processSingleFolder(inputDir, outputDir, browser) {
   }
 }
 
-async function extractPdfContent(pdfPath, browser) {
-  const page = await browser.newPage();
+async function extractPdfContent(pdfPath) {
   try {
-    await page.goto(`file://${pdfPath}`, { waitUntil: 'networkidle0' });
-    
-    // Extract metadata from PDF
-    const metadata = await page.evaluate(() => {
-      const title = document.querySelector('h1, .title')?.textContent || '';
-      const authors = Array.from(document.querySelectorAll('.author, .authors'))
-        .map(el => el.textContent.trim())
-        .filter(Boolean);
-      const abstract = document.querySelector('.abstract')?.textContent || '';
-      const keywords = document.querySelector('.keywords')?.textContent || '';
-      
-      return {
-        title,
-        authors,
-        abstract,
-        keywords
-      };
-    });
+    const pdfBytes = fs.readFileSync(pdfPath);
+    const pdfDoc = await PDFDocument.load(pdfBytes);
 
-    return metadata;
+    // Extract the first page
+    const firstPage = pdfDoc.getPage(0);
+
+    // Get all the text content from the first page
+    const textContent = await firstPage.getTextContent();
+    const textLines = textContent.items.map(item => item.str);
+
+    // Extract the header (assuming it's the first line)
+    const header = textLines[0] || '';
+    console.log('Extracted header:', header);
+
+    // Optionally, extract additional metadata
+    const title = pdfDoc.getTitle() || '';
+    const authors = pdfDoc.getAuthor() || '';
+    const keywords = pdfDoc.getKeywords() || '';
+
+    return {
+      header,
+      title,
+      authors,
+      keywords,
+    };
   } catch (error) {
     console.error('Error extracting PDF content:', error);
     return null;
-  } finally {
-    await page.close();
   }
 }
 
-export default extractPdfContent;
 
 // Main function to process all folders in batches
 async function main() {
   const inputDir = path.join(path.resolve(), 'input-html');
   const outputDir = path.join(path.resolve(), 'output');
+  const examplePdfPath = path.join(inputDir, 'example.pdf');
+  console.log('examplePdfPath', examplePdfPath);
 
-  // Clear the output directory
-  clearOutputFolder(outputDir);
-
-  const folders = fs.readdirSync(inputDir)
-    .filter(folder => {
-      const fullPath = path.join(inputDir, folder);
-      // Skip hidden files and non-directories
-      return !folder.startsWith('.') && fs.lstatSync(fullPath).isDirectory();
-    })
-    .map(folder => ({
-      input: path.join(inputDir, folder),
-      output: path.join(outputDir, folder),
-    }));
-
-  if (folders.length === 0) {
-    console.log('No valid folders found to process');
-    return;
-  }
-
+  // Initialize browser early since we'll need it for both PDF parsing and folder processing
   const browser = await puppeteer.launch();
 
   try {
+    // First parse the example PDF if it exists
+    if (fs.existsSync(examplePdfPath)) {
+      console.log('Processing example.pdf...');
+      const pdfMetadata = await extractPdfContent(examplePdfPath, browser);
+      console.log('Extracted PDF metadata:', pdfMetadata);
+    }
+
+    // Clear the output directory
+    clearOutputFolder(outputDir);
+
+    const folders = fs.readdirSync(inputDir)
+      .filter(folder => {
+        const fullPath = path.join(inputDir, folder);
+        // Skip hidden files and non-directories
+        return !folder.startsWith('.') && fs.lstatSync(fullPath).isDirectory();
+      })
+      .map(folder => ({
+        input: path.join(inputDir, folder),
+        output: path.join(outputDir, folder),
+      }));
+
+    if (folders.length === 0) {
+      console.log('No valid folders found to process');
+      return;
+    }
+
     await pMap(
       folders,
       async folder => {
@@ -160,11 +172,13 @@ async function main() {
       },
       { concurrency: BATCH_SIZE }
     );
+
+    console.log('Processing complete!');
+  } catch (error) {
+    console.error('Error during processing:', error);
   } finally {
     await browser.close();
   }
-
-  console.log('Processing complete!');
 }
 
 // async function main2() {
