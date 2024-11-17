@@ -14,16 +14,27 @@ function getValidItems(inputDir) {
     return [];
   }
 
-  return fs.readdirSync(inputDir).filter(item => {
-    // Skip hidden files, images folder, and init_images folder
+  const items = [];
+  const files = fs.readdirSync(inputDir);
+
+  for (const item of files) {
     if (item.startsWith('.') || 
         item === 'images' || 
-        item === 'init_images') return false;
+        item === 'init_images') continue;
     
     const fullPath = path.join(inputDir, item);
-    // Only include .html files, exclude directories and other files
-    return path.extname(fullPath) === '.html';
-  });
+    const ext = path.extname(fullPath).toLowerCase();
+    
+    if (ext === '.html' || ext === '.pdf') {
+      items.push({
+        name: item,
+        path: fullPath,
+        type: ext.slice(1) // 'html' or 'pdf'
+      });
+    }
+  }
+
+  return items;
 }
 
 // Helper function to clear the output folder
@@ -42,24 +53,77 @@ function clearOutputFolder(folderPath) {
   }
 }
 
-// Process a single folder
 async function processSingleFolder(inputDir, outputDir, browser) {
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
   }
 
   const items = getValidItems(inputDir);
+  let pdfMetadata = null;
 
+  // First, look for PDF and extract content
+  const pdfFile = items.find(item => item.type === 'pdf');
+  if (pdfFile) {
+    pdfMetadata = await extractPdfContent(pdfFile.path, browser);
+    console.log('Extracted PDF metadata:', pdfMetadata);
+  }
+
+  // Then process HTML files
   for (const item of items) {
-    const inputPath = path.join(inputDir, item);
-    // We don't need to check for directories anymore since getValidItems only returns .html files
-    const processedHtmlPath = path.join(outputDir, `${path.basename(item, '.html')}.html`);
-    const outputPdfPath = path.join(outputDir, `${path.basename(item, '.html')}.pdf`);
+    if (item.type === 'html') {
+      const processedHtmlPath = path.join(outputDir, `${path.basename(item.name, '.html')}.html`);
+      const outputPdfPath = path.join(outputDir, `${path.basename(item.name, '.html')}.pdf`);
 
-    const meta = await processHtml(inputPath, processedHtmlPath, path.join(inputDir, 'images'), browser);
-    await convertToPdf(processedHtmlPath, outputPdfPath, browser, meta);
+      const meta = await processHtml(
+        item.path, 
+        processedHtmlPath, 
+        path.join(inputDir, 'images'), 
+        browser,
+        pdfMetadata // Pass the PDF metadata
+      );
+
+      await convertToPdf(
+        processedHtmlPath, 
+        outputPdfPath, 
+        browser, 
+        { ...meta, pdfMetadata } // Include PDF metadata in the conversion
+      );
+    }
   }
 }
+
+async function extractPdfContent(pdfPath, browser) {
+  const page = await browser.newPage();
+  try {
+    await page.goto(`file://${pdfPath}`, { waitUntil: 'networkidle0' });
+    
+    // Extract metadata from PDF
+    const metadata = await page.evaluate(() => {
+      const title = document.querySelector('h1, .title')?.textContent || '';
+      const authors = Array.from(document.querySelectorAll('.author, .authors'))
+        .map(el => el.textContent.trim())
+        .filter(Boolean);
+      const abstract = document.querySelector('.abstract')?.textContent || '';
+      const keywords = document.querySelector('.keywords')?.textContent || '';
+      
+      return {
+        title,
+        authors,
+        abstract,
+        keywords
+      };
+    });
+
+    return metadata;
+  } catch (error) {
+    console.error('Error extracting PDF content:', error);
+    return null;
+  } finally {
+    await page.close();
+  }
+}
+
+export default extractPdfContent;
 
 // Main function to process all folders in batches
 async function main() {
