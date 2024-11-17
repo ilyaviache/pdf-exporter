@@ -48,9 +48,46 @@ function extractSurnames(html) {
   return Array.from(uniqueSurnames);
 }
 
-function processHtml(inputPath, outputPath, imageFolderPath) {
+async function calculateTotalHeight(browser, inputPath) {
+  const page = await browser.newPage();
+  await page.goto('file://' + inputPath, { waitUntil: 'domcontentloaded' });
+
+  // Calculate the height of the first 4 elements and update the CSS dynamically
+  const totalHeight = await page.evaluate(() => {
+    const elements = document.querySelectorAll('#preview-content > *');
+    const first4 = Array.from(elements).slice(0, 4);
+
+    // Calculate the total height of the first 4 elements
+    const heights = first4.map(el => el.offsetHeight);
+    const totalHeight = heights.reduce((sum, height) => sum + height, 0);
+
+    // Update the height for the vertical line
+    const mainTitle = document.querySelector('#preview-content > .main-title:before');
+    if (mainTitle) {
+      mainTitle.style.height = `${totalHeight}px`;
+    }
+
+    return totalHeight;
+  });
+
+  console.log(`Total height of the first 4 elements: ${totalHeight}px`);
+
+  // // Save the final HTML with updated dynamic CSS
+  const finalHtml = await page.content();
+  fs.writeFileSync(inputPath, finalHtml, 'utf8');
+
+  await page.close();
+
+  return { totalHeight };
+}
+
+
+
+async function processHtml(inputPath, outputPath, imageFolderPath, browser) {
   const html = fs.readFileSync(inputPath, 'utf8');
   const $ = cheerio.load(html);
+
+  let totalHeight = 404;
 
   // Add fonts to head section
   const fontStyles = `
@@ -171,7 +208,7 @@ function processHtml(inputPath, outputPath, imageFolderPath) {
 
     #preview-content .main-title {
       padding-left: 114px;
-      padding-top: 20px;
+      padding-top: 0px;
       font-size: 22px;
       font-family: Newton-Bold;
     }
@@ -207,15 +244,31 @@ function processHtml(inputPath, outputPath, imageFolderPath) {
 
     #preview h1, #preview h2, #preview h3, #preview h4, #preview h5, #preview strong {
       font-family: 'Newton-Bold' !important;
-      font-size: 18px !important;
+      font-size: 17px !important;
+    }
+    .main-title {
+      position: relative !important;
+    }
+
+    /* Add vertical line */
+    #preview-content > .main-title:before {
+      content: "";
+      position: absolute;
+      left: 100px;
+      top: 2px;
+      height: ${totalHeight}px;
+      border-left: 2px solid #d0d0d0;
+    }
+
+    #preview-content {
+      padding-top: 20px;
+      position: relative !important;
     }
   `;
   // Remove existing style tag if it exists
   // $('style').remove();
   
   const authors = extractSurnames(html);
-  console.log('Authors:', authors); // For debugging
-
   // Add new style tag with combined styles at the end of HTML to override other styles
   $('body').append(`<style>${customStyles}</style>`);
 
@@ -295,9 +348,16 @@ function processHtml(inputPath, outputPath, imageFolderPath) {
     }
   });
 
-  // Save the modified HTML
   fs.writeFileSync(outputPath, $.html(), 'utf8');
   console.log(`HTML processed and saved to ${outputPath}`);
+
+  const heights = await calculateTotalHeight(browser, outputPath);
+  console.log(heights, 'heights');
+
+  // const totalHeight = heights.reduce((sum, height) => sum + height, 0);
+  // console.log('Total height 123:', totalHeight);
+
+  // Save the modified HTML
 
   // Return metadata
   return { doi, authors };

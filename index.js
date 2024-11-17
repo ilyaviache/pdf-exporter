@@ -55,7 +55,7 @@ async function processSingleFolder(inputDir, outputDir, browser) {
     const processedHtmlPath = path.join(outputDir, `${path.basename(item, '.html')}.html`);
     const outputPdfPath = path.join(outputDir, `${path.basename(item, '.html')}.pdf`);
 
-    const meta = processHtml(inputPath, processedHtmlPath, path.join(inputDir, 'images'));
+    const meta = await processHtml(inputPath, processedHtmlPath, path.join(inputDir, 'images'), browser);
     await convertToPdf(processedHtmlPath, outputPdfPath, browser, meta);
   }
 }
