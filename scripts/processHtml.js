@@ -297,10 +297,13 @@ async function processHtml(inputPath, outputPath, imageFolderPath, browser) {
   const abstractDiv = $('.abstract');
 
   // Remove the h4 and get its text content
-  // const abstractText = abstractDiv.find('h4 cdiv').text().trim();
+  const abstractText = abstractDiv.find('h4 cdiv').text().trim();
 
   // Get the content from the p tag's cdiv
-  const contentText = abstractDiv.find('p cdiv').text().trim();
+  let contentText = abstractDiv.find('p cdiv').text().trim();
+  
+  // Remove "Abstract. " from the beginning if it exists
+  contentText = contentText.replace(/^Abstract\.\s*/i, '');
 
   // Remove existing h4 and p elements
   abstractDiv.find('h4, p').remove();

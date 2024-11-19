@@ -16,6 +16,8 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
     meta.authors.length === 2 ? `${meta.authors[0]}, ${meta.authors[1]}` :
     `${meta.authors[0]}, ${meta.authors[1]}, et al.`;
 
+  const titleHeader = 'Physics of Metals and Metallography';
+
   // First page options
   const firstPageOptions = {
     path: firstPagePdfPath,
@@ -27,15 +29,15 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
         padding: 0px 0px 10px;
         margin: 0px 40px;
         display: flex;
-        justify-content: center;
+        justify-content: space-between;
         align-items: center;
         border-bottom: 0.5px solid #d0d0d0;
       ">
         <span style="
           font-family: 'Newton-BoldItalic';
-          font-size: 11px;
+          font-size: 14px;
         ">
-          Physics of Metals and Metallography
+          ${titleHeader}
         </span>
       </div>
     `,
@@ -50,19 +52,19 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
       ">
         <span style="
           font-family: 'Newton-Regular';
-          font-size: 9px;
+          font-size: 11px;
         ">
           © The Author(s) 2024
         </span>
         <span style="
           font-family: 'Newton-Regular';
-          font-size: 9px;
+          font-size: 11px;
         ">
           ${doiLink}
         </span>
         <span style="
           font-family: 'Newton-Bold';
-          font-size: 9px;
+          font-size: 11px;
         ">
           Nauka Publishers
         </span>
@@ -121,7 +123,7 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
           font-family: 'Newton-Regular';
           font-size: 11px;
         ">
-          Physics of Metals and Metallography
+          ${titleHeader}
         </span>
         <span style="
           font-family: 'Newton-Bold';

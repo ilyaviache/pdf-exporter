@@ -64,10 +64,10 @@ async function processSingleFolder(inputDir, outputDir, browser) {
 
   // First, look for PDF and extract content
   const pdfFile = items.find(item => item.type === 'pdf');
-  if (pdfFile) {
-    pdfMetadata = await extractPdfContent(pdfFile.path, browser);
-    console.log('Extracted PDF metadata:', pdfMetadata);
-  }
+  // if (pdfFile) {
+  //   pdfMetadata = await extractPdfContent(pdfFile.path, browser);
+  //   console.log('Extracted PDF metadata:', pdfMetadata);
+  // }
 
   // Then process HTML files
   for (const item of items) {
