@@ -313,7 +313,7 @@ async function processHtml(inputPath, outputPath, imageFolderPath, browser) {
 
   if (doiDiv.length) {
     const originalText = doiDiv.text();
-    const doiMatch = originalText.match(/DOI:\s*([\d./\-A-Z]+)\s*EDN:/i);
+    const doiMatch = originalText.match(/DOI:\s*([\d./\-A-Z]+)(?:,\s*)?EDN:/i);
     
     if (doiMatch && doiMatch[1]) {
       const doiNumber = doiMatch[1];
