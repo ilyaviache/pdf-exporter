@@ -129,15 +129,16 @@ async function main() {
   try {
     clearOutputFolder(outputDir);
 
-    // Get parent folders
+    // Get all parent folders
     const parentFolders = fs.readdirSync(inputDir)
       .filter(folder => {
         const fullPath = path.join(inputDir, folder);
         return !folder.startsWith('.') && fs.lstatSync(fullPath).isDirectory();
       });
 
-    // Process each parent folder
+    // Process each parent folder sequentially
     for (const parentFolder of parentFolders) {
+      console.log(`Processing parent folder: ${parentFolder}`);
       const parentPath = path.join(inputDir, parentFolder);
       const parentOutputPath = path.join(outputDir, parentFolder);
 
@@ -153,6 +154,11 @@ async function main() {
         continue;
       }
 
+      // Create parent output directory if it doesn't exist
+      if (!fs.existsSync(parentOutputPath)) {
+        fs.mkdirSync(parentOutputPath, { recursive: true });
+      }
+
       // Process subfolders concurrently within each parent folder
       await pMap(
         subFolders,
@@ -160,13 +166,20 @@ async function main() {
           const inputPath = path.join(parentPath, subFolder);
           const outputPath = path.join(parentOutputPath, subFolder);
           console.log(`Processing subfolder: ${inputPath}`);
-          await processSingleFolder(inputPath, outputPath, browser, parentFolder);
+          try {
+            await processSingleFolder(inputPath, outputPath, browser, parentFolder);
+          } catch (error) {
+            console.error(`Error processing subfolder ${subFolder} in ${parentFolder}:`, error);
+            // Continue with other subfolders even if one fails
+          }
         },
         { concurrency: BATCH_SIZE }
       );
+
+      console.log(`Completed processing parent folder: ${parentFolder}`);
     }
 
-    console.log('Processing complete!');
+    console.log('All processing complete!');
   } catch (error) {
     console.error('Error during processing:', error);
   } finally {
