@@ -257,7 +257,7 @@ async function processHtml(inputPath, outputPath, imageFolderPath, browser) {
       left: 100px;
       top: 2px;
       height: ${totalHeight}px;
-      border-left: 2px solid #d0d0d0;
+      border-left: 1px solid #000000;
     }
 
     #preview-content {
@@ -303,16 +303,17 @@ async function processHtml(inputPath, outputPath, imageFolderPath, browser) {
   } else {
     console.warn('Keywords/DOI div not found');
   }
+
   // Extract DOI
-  // const doiDiv = $('#preview-content > div').filter(function() {
-  //   return $(this).text().includes('DOI:');
-  // });
-  const doiDiv = $('#preview-content > div:nth-child(4)');
+  const abstractDiv = $('.abstract');
+  const doiDiv = abstractDiv.next('div');
+
+
   let doi = '';
 
   if (doiDiv.length) {
     const originalText = doiDiv.text();
-    const doiMatch = originalText.match(/DOI:\s*([\d./\-A-Z]+),\s*EDN:/i);
+    const doiMatch = originalText.match(/DOI:\s*([\d./\-A-Z]+)\s*EDN:/i);
     
     if (doiMatch && doiMatch[1]) {
       const doiNumber = doiMatch[1];
@@ -358,9 +359,6 @@ async function processHtml(inputPath, outputPath, imageFolderPath, browser) {
   //   console.warn('DOI div not found');
   // }
 
-
-  // Select the abstract div
-  const abstractDiv = $('.abstract');
 
   // Remove the h4 and get its text content
   const abstractText = abstractDiv.find('h4 cdiv').text().trim();
