@@ -131,19 +131,19 @@ async function extractPdfContent(pdfPath) {
 async function main() {
   const inputDir = path.join(path.resolve(), 'input-html');
   const outputDir = path.join(path.resolve(), 'output');
-  const examplePdfPath = path.join(inputDir, 'example.pdf');
-  console.log('examplePdfPath', examplePdfPath);
+  // const examplePdfPath = path.join(inputDir, 'example.pdf');
+  // console.log('examplePdfPath', examplePdfPath);
 
   // Initialize browser early since we'll need it for both PDF parsing and folder processing
   const browser = await puppeteer.launch();
 
   try {
     // First parse the example PDF if it exists
-    if (fs.existsSync(examplePdfPath)) {
-      console.log('Processing example.pdf...');
-      const pdfMetadata = await extractPdfContent(examplePdfPath, browser);
-      console.log('Extracted PDF metadata:', pdfMetadata);
-    }
+    // if (fs.existsSync(examplePdfPath)) {
+    //   console.log('Processing example.pdf...');
+    //   const pdfMetadata = await extractPdfContent(examplePdfPath, browser);
+    //   console.log('Extracted PDF metadata:', pdfMetadata);
+    // }
 
     // Clear the output directory
     clearOutputFolder(outputDir);
