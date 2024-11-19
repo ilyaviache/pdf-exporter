@@ -70,7 +70,7 @@ async function calculateTotalHeight(browser, inputPath) {
     return totalHeight;
   });
 
-  console.log(`Total height of the first 4 elements: ${totalHeight}px`);
+  // console.log(`Total height of the first 4 elements: ${totalHeight}px`);
 
   // // Save the final HTML with updated dynamic CSS
   const finalHtml = await page.content();
@@ -264,6 +264,10 @@ async function processHtml(inputPath, outputPath, imageFolderPath, browser) {
       padding-top: 20px;
       position: relative !important;
     }
+
+    a {
+      color: #000000 !important;
+    }
   `;
   // Remove existing style tag if it exists
   // $('style').remove();
@@ -275,30 +279,84 @@ async function processHtml(inputPath, outputPath, imageFolderPath, browser) {
   // Set body background color to light gray
   $('#preview').css('background', '#f0f0f0');
 
+  // Handle Keywords and DOI formatting
+  const targetDiv = $('#preview-content > div:nth-child(4)');
+
+  if (targetDiv.length) {
+    let text = targetDiv.html();
+    
+    // Handle Keywords
+    text = text.replace(
+      /^Keywords:/, 
+      '<span class="bold">Keywords:</span>'
+    );
+    
+    // Handle DOI (skip if already wrapped in bold)
+    if (!text.includes('<span class="bold">DOI:')) {
+      text = text.replace(
+        /(DOI:\s*)([\d./\-A-Z]+)(,\s*EDN:)/i,
+        '<span class="bold">DOI: </span>$2$3'
+      );
+    }
+    
+    targetDiv.html(text);
+  } else {
+    console.warn('Keywords/DOI div not found');
+  }
   // Extract DOI
-  const doiDiv = $('#preview-content > div:nth-child(4)'); // Get 4th child div of #preview-content
+  // const doiDiv = $('#preview-content > div').filter(function() {
+  //   return $(this).text().includes('DOI:');
+  // });
+  const doiDiv = $('#preview-content > div:nth-child(4)');
   let doi = '';
 
   if (doiDiv.length) {
     const originalText = doiDiv.text();
-    const doiMatch = originalText.match(/DOI:\s*([\d./-]+)/);
+    const doiMatch = originalText.match(/DOI:\s*([\d./\-A-Z]+),\s*EDN:/i);
     
     if (doiMatch && doiMatch[1]) {
       const doiNumber = doiMatch[1];
+      // Modify DOI format: Replace 4th character from end with 'e'
       const modifiedDoi = doiNumber.slice(0, -4) + 'e' + doiNumber.slice(-3);
       doi = modifiedDoi;
       
       const newText = originalText.replace(
-        /DOI:\s*([\d./-]+)/, 
-        `<span class="bold">DOI: </span>${modifiedDoi}`
+        /(DOI:\s*)([\d./\-A-Z]+)(,\s*EDN:)/i, 
+        `<span class="bold">DOI: </span>${modifiedDoi}$3`
       );
       doiDiv.html(newText);
     } else {
-      console.warn('DOI pattern not found in text:', originalText);
+      console.warn('DOI pattern not found in text');
     }
   } else {
     console.warn('DOI div not found');
   }
+
+
+  // // Extract DOI
+  // const doiDiv = $('#preview-content > div:nth-child(4)'); // Get 4th child div of #preview-content
+  // let doi = '';
+
+  // if (doiDiv.length) {
+  //   const originalText = doiDiv.text();
+  //   const doiMatch = originalText.match(/DOI:\s*([\d./-]+)/);
+    
+  //   if (doiMatch && doiMatch[1]) {
+  //     const doiNumber = doiMatch[1];
+  //     const modifiedDoi = doiNumber.slice(0, -4) + 'e' + doiNumber.slice(-3);
+  //     doi = modifiedDoi;
+      
+  //     const newText = originalText.replace(
+  //       /DOI:\s*([\d./-]+)/, 
+  //       `<span class="bold">DOI: </span>${modifiedDoi}`
+  //     );
+  //     doiDiv.html(newText);
+  //   } else {
+  //     console.warn('DOI pattern not found in text');
+  //   }
+  // } else {
+  //   console.warn('DOI div not found');
+  // }
 
 
   // Select the abstract div
@@ -363,7 +421,7 @@ async function processHtml(inputPath, outputPath, imageFolderPath, browser) {
   console.log(`HTML processed and saved to ${outputPath}`);
 
   const heights = await calculateTotalHeight(browser, outputPath);
-  console.log(heights, 'heights');
+  // console.log(heights, 'heights');
 
   // const totalHeight = heights.reduce((sum, height) => sum + height, 0);
   // console.log('Total height 123:', totalHeight);

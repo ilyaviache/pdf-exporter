@@ -1,6 +1,7 @@
 import puppeteer from 'puppeteer';
 import { PDFDocument } from 'pdf-lib';
 import fs from 'fs';
+import { findJournalTranslation } from './journalNames.js';
 
 async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
   // Create temporary paths for our split PDFs
@@ -17,8 +18,8 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
     `${meta.authors[0]}, ${meta.authors[1]}, et al.`;
 
    // Use parent folder name as the title header
-   const titleHeader = meta.parentFolderName || 'Physics of Metals and Metallography';
-   console.log('titleHeader', titleHeader);
+   const titleHeader = findJournalTranslation(meta.parentFolderName) || 'Physics of Metals and Metallography';
+  //  console.log('titleHeader', titleHeader);
 
   // First page options
   const firstPageOptions = {

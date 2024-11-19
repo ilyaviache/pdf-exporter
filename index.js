@@ -121,6 +121,7 @@ async function extractPdfContent(pdfPath) {
 
 
 // Main function to process all folders in batches
+// Main function to process all folders in batches
 async function main() {
   const inputDir = path.join(path.resolve(), 'input-html');
   const outputDir = path.join(path.resolve(), 'output');
@@ -138,7 +139,11 @@ async function main() {
 
     // Process each parent folder sequentially
     for (const parentFolder of parentFolders) {
+      // Extract journal name (text before first "-")
+      const journalName = parentFolder.split('-')[0].trim();
       console.log(`Processing parent folder: ${parentFolder}`);
+      console.log(`Journal name: ${journalName}`);
+
       const parentPath = path.join(inputDir, parentFolder);
       const parentOutputPath = path.join(outputDir, parentFolder);
 
@@ -165,12 +170,12 @@ async function main() {
         async subFolder => {
           const inputPath = path.join(parentPath, subFolder);
           const outputPath = path.join(parentOutputPath, subFolder);
-          console.log(`Processing subfolder: ${inputPath}`);
+          // console.log(`Processing subfolder: ${inputPath}`);
           try {
-            await processSingleFolder(inputPath, outputPath, browser, parentFolder);
+            // Pass the journal name instead of full parent folder name
+            await processSingleFolder(inputPath, outputPath, browser, journalName);
           } catch (error) {
             console.error(`Error processing subfolder ${subFolder} in ${parentFolder}:`, error);
-            // Continue with other subfolders even if one fails
           }
         },
         { concurrency: BATCH_SIZE }
