@@ -54,20 +54,13 @@ function clearOutputFolder(folderPath) {
   }
 }
 
-async function processSingleFolder(inputDir, outputDir, browser) {
+async function processSingleFolder(inputDir, outputDir, browser, parentFolderName) {
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
   }
 
   const items = getValidItems(inputDir);
   let pdfMetadata = null;
-
-  // First, look for PDF and extract content
-  const pdfFile = items.find(item => item.type === 'pdf');
-  // if (pdfFile) {
-  //   pdfMetadata = await extractPdfContent(pdfFile.path, browser);
-  //   console.log('Extracted PDF metadata:', pdfMetadata);
-  // }
 
   // Then process HTML files
   for (const item of items) {
@@ -80,14 +73,14 @@ async function processSingleFolder(inputDir, outputDir, browser) {
         processedHtmlPath, 
         path.join(inputDir, 'images'), 
         browser,
-        pdfMetadata // Pass the PDF metadata
+        pdfMetadata
       );
 
       await convertToPdf(
         processedHtmlPath, 
         outputPdfPath, 
         browser, 
-        { ...meta, pdfMetadata } // Include PDF metadata in the conversion
+        { ...meta, pdfMetadata, parentFolderName } // Include parent folder name
       );
     }
   }
@@ -131,47 +124,47 @@ async function extractPdfContent(pdfPath) {
 async function main() {
   const inputDir = path.join(path.resolve(), 'input-html');
   const outputDir = path.join(path.resolve(), 'output');
-  // const examplePdfPath = path.join(inputDir, 'example.pdf');
-  // console.log('examplePdfPath', examplePdfPath);
-
-  // Initialize browser early since we'll need it for both PDF parsing and folder processing
   const browser = await puppeteer.launch();
 
   try {
-    // First parse the example PDF if it exists
-    // if (fs.existsSync(examplePdfPath)) {
-    //   console.log('Processing example.pdf...');
-    //   const pdfMetadata = await extractPdfContent(examplePdfPath, browser);
-    //   console.log('Extracted PDF metadata:', pdfMetadata);
-    // }
-
-    // Clear the output directory
     clearOutputFolder(outputDir);
 
-    const folders = fs.readdirSync(inputDir)
+    // Get parent folders
+    const parentFolders = fs.readdirSync(inputDir)
       .filter(folder => {
         const fullPath = path.join(inputDir, folder);
-        // Skip hidden files and non-directories
         return !folder.startsWith('.') && fs.lstatSync(fullPath).isDirectory();
-      })
-      .map(folder => ({
-        input: path.join(inputDir, folder),
-        output: path.join(outputDir, folder),
-      }));
+      });
 
-    if (folders.length === 0) {
-      console.log('No valid folders found to process');
-      return;
+    // Process each parent folder
+    for (const parentFolder of parentFolders) {
+      const parentPath = path.join(inputDir, parentFolder);
+      const parentOutputPath = path.join(outputDir, parentFolder);
+
+      // Get subfolders within parent folder
+      const subFolders = fs.readdirSync(parentPath)
+        .filter(folder => {
+          const fullPath = path.join(parentPath, folder);
+          return !folder.startsWith('.') && fs.lstatSync(fullPath).isDirectory();
+        });
+
+      if (subFolders.length === 0) {
+        console.log(`No subfolders found in ${parentFolder}`);
+        continue;
+      }
+
+      // Process subfolders concurrently within each parent folder
+      await pMap(
+        subFolders,
+        async subFolder => {
+          const inputPath = path.join(parentPath, subFolder);
+          const outputPath = path.join(parentOutputPath, subFolder);
+          console.log(`Processing subfolder: ${inputPath}`);
+          await processSingleFolder(inputPath, outputPath, browser, parentFolder);
+        },
+        { concurrency: BATCH_SIZE }
+      );
     }
-
-    await pMap(
-      folders,
-      async folder => {
-        console.log(`Processing folder: ${folder.input}`);
-        await processSingleFolder(folder.input, folder.output, browser);
-      },
-      { concurrency: BATCH_SIZE }
-    );
 
     console.log('Processing complete!');
   } catch (error) {
@@ -180,7 +173,6 @@ async function main() {
     await browser.close();
   }
 }
-
 // async function main2() {
 //   const browser = await puppeteer.launch({
 //     args: ['--no-sandbox', '--disable-setuid-sandbox']

@@ -277,20 +277,28 @@ async function processHtml(inputPath, outputPath, imageFolderPath, browser) {
 
   // Extract DOI
   const doiDiv = $('#preview-content > div:nth-child(4)'); // Get 4th child div of #preview-content
-  // const doi = doiDiv.text().match(/DOI:\s*(.*?)\s*,/)[1].slice(0, -4) + 'e' + doiDiv.text().match(/DOI:\s*(.*?)\s*,/)[1].slice(-3);
+  let doi = '';
 
-  const originalText = doiDiv.text();
-  const doiMatch = originalText.match(/DOI:\s*(.*?)\s*,/);
-  const doiNumber = doiMatch[1];
-  const modifiedDoi = doiNumber.slice(0, -4) + 'e' + doiNumber.slice(-3);
-  
-  const newText = originalText.replace(
-    /DOI:\s*(.*?)\s*,/, 
-    `<span class="bold">DOI: </span>${modifiedDoi},`
-  );
-  doiDiv.html(newText);
-
-  const doi = modifiedDoi;
+  if (doiDiv.length) {
+    const originalText = doiDiv.text();
+    const doiMatch = originalText.match(/DOI:\s*([\d./-]+)/);
+    
+    if (doiMatch && doiMatch[1]) {
+      const doiNumber = doiMatch[1];
+      const modifiedDoi = doiNumber.slice(0, -4) + 'e' + doiNumber.slice(-3);
+      doi = modifiedDoi;
+      
+      const newText = originalText.replace(
+        /DOI:\s*([\d./-]+)/, 
+        `<span class="bold">DOI: </span>${modifiedDoi}`
+      );
+      doiDiv.html(newText);
+    } else {
+      console.warn('DOI pattern not found in text:', originalText);
+    }
+  } else {
+    console.warn('DOI div not found');
+  }
 
 
   // Select the abstract div

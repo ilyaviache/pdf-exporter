@@ -16,7 +16,9 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
     meta.authors.length === 2 ? `${meta.authors[0]}, ${meta.authors[1]}` :
     `${meta.authors[0]}, ${meta.authors[1]}, et al.`;
 
-  const titleHeader = 'Physics of Metals and Metallography';
+   // Use parent folder name as the title header
+   const titleHeader = meta.parentFolderName || 'Physics of Metals and Metallography';
+   console.log('titleHeader', titleHeader);
 
   // First page options
   const firstPageOptions = {
