@@ -303,121 +303,93 @@ async function processHtml(inputPath, outputPath, imageFolderPath, browser) {
   } else {
     console.warn('Keywords/DOI div not found');
   }
-
-  const abstractDiv = $('.abstract');
-  let doiDiv = null;
+  // DOI SEARCH STARTS
+  
   let doi = '';
 
-  // Function to process DOI div
-  const processDOIDiv = (div) => {
-    if (!div || !div.length) return false;
+  // Find first occurrence of DOI in any text node within #preview-content
+  let doiNumber = null;
+  let foundNode = null;
+
+  $('#preview-content').find('*').contents().each(function() {
+    if (doiNumber) return false; // Stop searching after first match
     
-    const originalText = div.text();
-    const doiMatch = originalText.match(/DOI:\s*([\d./\-A-Z]+)(?:\s*,?\s*EDN:)/i);
-    
-    if (doiMatch && doiMatch[1]) {
-      const doiNumber = doiMatch[1];
-      const modifiedDoi = doiNumber.slice(0, -4) + 'e' + doiNumber.slice(-3);
-      doi = modifiedDoi;
+    if (this.nodeType === 3) { // Text nodes only
+      const text = $(this).text();
+      const match = text.match(/DOI:\s*([\d./\-A-Z]+)(?:\s*,?\s*EDN:)/i);
       
-      // First update the original DOI div
-      const newText = originalText.replace(
-        /(DOI:\s*)([\d./\-A-Z]+)(,\s*EDN:)/i, 
+      if (match && match[1]) {
+        doiNumber = match[1];
+        foundNode = this;
+        return false; // Break the .each() loop
+      }
+    }
+  });
+
+  if (doiNumber) {
+    const modifiedDoi = doiNumber.slice(0, -4) + 'e' + doiNumber.slice(-3);
+    doi = modifiedDoi; // Save for later use
+    
+    if (foundNode && foundNode.textContent) {
+      $(foundNode).replaceWith(foundNode.textContent.replace(
+        /(DOI:\s*)([\d./\-A-Z]+)(,\s*EDN:)/i,
         `<span class="bold">DOI: </span>${modifiedDoi}$3`
-      );
-      div.html(newText);
+      ));
+    } else {
+      // console.warn('Found DOI number but node content is invalid:', {
+      //   doiNumber,
+      //   foundNode: foundNode ? 'exists' : 'null',
+      //   textContent: foundNode?.textContent
+      // });
+    }
 
-      // Then scan all children of #preview-content for DOI references
-      $('#preview-content').find('*').contents().each(function() {
-        if (this.nodeType === 3) { // Text nodes only
-          const text = $(this).text();
-          if (text.includes(`DOI: ${doiNumber}`)) {
-            const updatedText = text.replace(
-              `DOI: ${doiNumber}`,
-              `<span class="bold">DOI: </span> ${modifiedDoi}`
-            );
-            $(this).replaceWith(updatedText);
-          }
+    // Then update all other references to this DOI throughout the document
+    $('#preview-content').find('*').contents().each(function() {
+      if (this.nodeType === 3) { // Text nodes only
+        const text = $(this).text();
+        if (text.includes(`DOI: ${doiNumber}`)) {
+          const updatedText = text.replace(
+            `DOI: ${doiNumber}`,
+            `<span class="bold">DOI: </span>${modifiedDoi}`
+          );
+          $(this).replaceWith(updatedText);
         }
-      });
-      
-      return true;
-    }
-    return false;
-  };
-
-  // Array of selectors to try, in order of preference
-  const selectors = [
-    () => abstractDiv.next('div'),                           // Next div after abstract
-    () => abstractDiv.next('div').next('div'),              // Second div after abstract
-    () => $('#preview-content').find('div:contains("DOI:")').first(), // First div containing "DOI:" in preview-content
-  ];
-
-  // Try each selector until we find the DOI
-  let doiFound = false;
-  for (const getDiv of selectors) {
-    doiDiv = getDiv();
-    if (processDOIDiv(doiDiv)) {
-      doiFound = true;
-      break;
-    }
-  }
-
-  if (!doiFound) {
+      }
+    });
+  } else {
     console.warn('!!!!!!!!!!!!! DOI not found in any expected location');
     console.log('inputPath:', inputPath);
-    // Log the text content of each attempted location for debugging
-    // selectors.forEach((getDiv, index) => {
-    //   const div = getDiv();
-    //   if (div.length) {
-    //     console.log(`Location ${index + 1} content:`, div.text());
-    //   }
-    // });
   }
 
-    // if (doiDiv.length) {
-  //   const originalText = doiDiv.text();
-  //   const doiMatch = originalText.match(/DOI:\s*([\d./-]+)/);
+  // DOI SEARCH ENDS
+
+
+  const abstractDiv = $('.abstract').first();
+
+  if (abstractDiv.length) {
+    // Remove the h4 and get its text content
+    const abstractText = abstractDiv.find('h4 cdiv').text().trim();
+
+    // Get the content from the p tag's cdiv 
+    let contentText = abstractDiv.find('p cdiv').text().trim();
     
-  //   if (doiMatch && doiMatch[1]) {
-  //     const doiNumber = doiMatch[1];
-  //     const modifiedDoi = doiNumber.slice(0, -4) + 'e' + doiNumber.slice(-3);
-  //     doi = modifiedDoi;
-      
-  //     const newText = originalText.replace(
-  //       /DOI:\s*([\d./-]+)/, 
-  //       `<span class="bold">DOI: </span>${modifiedDoi}`
-  //     );
-  //     doiDiv.html(newText);
-  //   } else {
-  //     console.warn('DOI pattern not found in text');
-  //   }
-  // } else {
-  //   console.warn('DOI div not found');
-  // }
+    // Remove "Abstract. " from the beginning if it exists
+    contentText = contentText.replace(/^Abstract\.\s*/i, '');
 
-  // Remove the h4 and get its text content
-  const abstractText = abstractDiv.find('h4 cdiv').text().trim();
+    // Remove existing h4 and p elements
+    abstractDiv.find('h4, p').remove();
 
-  // Get the content from the p tag's cdiv
-  let contentText = abstractDiv.find('p cdiv').text().trim();
-  
-  // Remove "Abstract. " from the beginning if it exists
-  contentText = contentText.replace(/^Abstract\.\s*/i, '');
+    // Create new p element with the combined structure
+    const newP = $('<p style="">');
+    const newCdiv = $('<cdiv>').attr('cdata-tag-id', '38');
+    const abstractSpan = $('<span class="abstract_span">').text("Abstract. ");
 
-  // Remove existing h4 and p elements
-  abstractDiv.find('h4, p').remove();
-
-  // Create new p element with the combined structure
-  const newP = $('<p style="">');
-  const newCdiv = $('<cdiv>').attr('cdata-tag-id', '38');
-  const abstractSpan = $('<span class="abstract_span">').text("Abstract. ");
-
-  // Combine the elements
-  newCdiv.append(abstractSpan);
-  newCdiv.append(contentText);
-  newP.append(newCdiv);
-  abstractDiv.append(newP);
+    // Combine the elements
+    newCdiv.append(abstractSpan);
+    newCdiv.append(contentText);
+    newP.append(newCdiv);
+    abstractDiv.append(newP);
+  }
 
   // Convert images to base64 and embed them
   $('img').each((i, img) => {
