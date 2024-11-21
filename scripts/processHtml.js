@@ -304,20 +304,19 @@ async function processHtml(inputPath, outputPath, imageFolderPath, browser) {
     console.warn('Keywords/DOI div not found');
   }
 
-  // Extract DOI
   const abstractDiv = $('.abstract');
-  const doiDiv = abstractDiv.next('div');
-
-
+  let doiDiv = null;
   let doi = '';
 
-  if (doiDiv.length) {
-    const originalText = doiDiv.text();
+  // Function to process DOI div
+  const processDOIDiv = (div) => {
+    if (!div || !div.length) return false;
+    
+    const originalText = div.text();
     const doiMatch = originalText.match(/DOI:\s*([\d./\-A-Z]+)(?:\s*,?\s*EDN:)/i);
     
     if (doiMatch && doiMatch[1]) {
       const doiNumber = doiMatch[1];
-      // Modify DOI format: Replace 4th character from end with 'e'
       const modifiedDoi = doiNumber.slice(0, -4) + 'e' + doiNumber.slice(-3);
       doi = modifiedDoi;
       
@@ -325,22 +324,42 @@ async function processHtml(inputPath, outputPath, imageFolderPath, browser) {
         /(DOI:\s*)([\d./\-A-Z]+)(,\s*EDN:)/i, 
         `<span class="bold">DOI: </span>${modifiedDoi}$3`
       );
-      doiDiv.html(newText);
-    } else {
-      console.warn('!!!!!!!!!!!!! DOI pattern not found in text');
-      console.log('originalText', originalText);
-      console.log('inputPath', inputPath);
+      div.html(newText);
+      return true;
     }
-  } else {
-    console.warn('!!!!!!!!!!!!! DOI div not found');
+    return false;
+  };
+
+  // Array of selectors to try, in order of preference
+  const selectors = [
+    () => abstractDiv.next('div'),                           // Next div after abstract
+    () => abstractDiv.next('div').next('div'),              // Second div after abstract
+    () => $('#preview-content').find('div:contains("DOI:")').first(), // First div containing "DOI:" in preview-content
+  ];
+
+  // Try each selector until we find the DOI
+  let doiFound = false;
+  for (const getDiv of selectors) {
+    doiDiv = getDiv();
+    if (processDOIDiv(doiDiv)) {
+      doiFound = true;
+      break;
+    }
   }
 
+  if (!doiFound) {
+    console.warn('!!!!!!!!!!!!! DOI not found in any expected location');
+    console.log('inputPath:', inputPath);
+    // Log the text content of each attempted location for debugging
+    selectors.forEach((getDiv, index) => {
+      const div = getDiv();
+      if (div.length) {
+        console.log(`Location ${index + 1} content:`, div.text());
+      }
+    });
+  }
 
-  // // Extract DOI
-  // const doiDiv = $('#preview-content > div:nth-child(4)'); // Get 4th child div of #preview-content
-  // let doi = '';
-
-  // if (doiDiv.length) {
+    // if (doiDiv.length) {
   //   const originalText = doiDiv.text();
   //   const doiMatch = originalText.match(/DOI:\s*([\d./-]+)/);
     
@@ -360,7 +379,6 @@ async function processHtml(inputPath, outputPath, imageFolderPath, browser) {
   // } else {
   //   console.warn('DOI div not found');
   // }
-
 
   // Remove the h4 and get its text content
   const abstractText = abstractDiv.find('h4 cdiv').text().trim();
