@@ -50,7 +50,7 @@ function clearOutputFolder(folderPath) {
         fs.unlinkSync(filePath);
       }
     });
-    console.log(`Output folder cleared: ${folderPath}`);
+    // console.log(`Output folder cleared: ${folderPath}`);
   }
 }
 

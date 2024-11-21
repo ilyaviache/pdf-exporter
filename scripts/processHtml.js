@@ -313,9 +313,7 @@ async function processHtml(inputPath, outputPath, imageFolderPath, browser) {
 
   if (doiDiv.length) {
     const originalText = doiDiv.text();
-    console.log('originalText', originalText);
-    const doiMatch = originalText.match(/DOI:\s*([\d./\-A-Z]+)(?:,\s*)?EDN:/i);
-    console.log('doiMatch', doiMatch);
+    const doiMatch = originalText.match(/DOI:\s*([\d./\-A-Z]+)(?:\s*,?\s*EDN:)/i);
     
     if (doiMatch && doiMatch[1]) {
       const doiNumber = doiMatch[1];
@@ -330,6 +328,8 @@ async function processHtml(inputPath, outputPath, imageFolderPath, browser) {
       doiDiv.html(newText);
     } else {
       console.warn('!!!!!!!!!!!!! DOI pattern not found in text');
+      console.log('originalText', originalText);
+      console.log('inputPath', inputPath);
     }
   } else {
     console.warn('!!!!!!!!!!!!! DOI div not found');
@@ -418,9 +418,9 @@ async function processHtml(inputPath, outputPath, imageFolderPath, browser) {
   });
 
   fs.writeFileSync(outputPath, $.html(), 'utf8');
-  console.log(`HTML processed and saved to ${outputPath}`);
+  // console.log(`HTML processed and saved to ${outputPath}`);
 
-  const heights = await calculateTotalHeight(browser, outputPath);
+  // const heights = await calculateTotalHeight(browser, outputPath);
   // console.log(heights, 'heights');
 
   // const totalHeight = heights.reduce((sum, height) => sum + height, 0);
