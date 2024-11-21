@@ -25,20 +25,13 @@ function getValidItems(inputDir) {
         item === 'init_images') continue;
     
     const fullPath = path.join(inputDir, item);
-    const ext = path.extname(fullPath).toLowerCase();
     
     // Only include HTML files that start with 'image_modified'
-    if (ext === '.html' && item.startsWith('image_modified')) {
+    if (item.startsWith('image_modified') && item.endsWith('.html')) {
       items.push({
         name: item,
         path: fullPath,
-        type: ext.slice(1) // 'html'
-      });
-    } else if (ext === '.pdf') {
-      items.push({
-        name: item,
-        path: fullPath,
-        type: ext.slice(1) // 'pdf'
+        type: 'html'
       });
     }
   }
@@ -73,23 +66,35 @@ async function processSingleFolder(inputDir, outputDir, browser, parentFolderNam
   // Then process HTML files
   for (const item of items) {
     if (item.type === 'html') {
-      const processedHtmlPath = path.join(outputDir, `${path.basename(item.name, '.html')}.html`);
-      const outputPdfPath = path.join(outputDir, `${path.basename(item.name, '.html')}.pdf`);
+      // Clean up the filename by:
+      // 1. Remove .html extension
+      // 2. Remove any .pdf within the filename
+      // 3. Remove any _translated suffix
+      const baseName = path.basename(item.name, '.html')
+        .replace('.pdf', '')
+      
+      // Construct paths without nesting directories
+      const processedHtmlPath = path.join(outputDir, `${baseName}.html`);
+      const outputPdfPath = path.join(outputDir, `${baseName}.pdf`);
 
-      const meta = await processHtml(
-        item.path, 
-        processedHtmlPath, 
-        path.join(inputDir, 'images'), 
-        browser,
-        pdfMetadata
-      );
+      try {
+        const meta = await processHtml(
+          item.path, 
+          processedHtmlPath, 
+          path.join(inputDir, 'images'), 
+          browser,
+          pdfMetadata
+        );
 
-      await convertToPdf(
-        processedHtmlPath, 
-        outputPdfPath, 
-        browser, 
-        { ...meta, pdfMetadata, parentFolderName } // Include parent folder name
-      );
+        await convertToPdf(
+          processedHtmlPath, 
+          outputPdfPath, 
+          browser, 
+          { ...meta, pdfMetadata, parentFolderName }
+        );
+      } catch (error) {
+        console.error(`!!!!!!!!!!!!! Error processing file ${item.name}:`, error);
+      }
     }
   }
 }
@@ -176,11 +181,13 @@ async function main() {
       await pMap(
         subFolders,
         async subFolder => {
+          // Clean up subfolder name by removing .pdf if present
+          const cleanSubFolder = subFolder.replace('.pdf', '');
+          
           const inputPath = path.join(parentPath, subFolder);
-          const outputPath = path.join(parentOutputPath, subFolder);
-          // console.log(`Processing subfolder: ${inputPath}`);
+          const outputPath = path.join(parentOutputPath, cleanSubFolder);
+          
           try {
-            // Pass the journal name instead of full parent folder name
             await processSingleFolder(inputPath, outputPath, browser, journalName);
           } catch (error) {
             console.error(`!!!!!!!!!!!!! Error processing subfolder ${subFolder} in ${parentFolder}:`, error);

@@ -23,9 +23,12 @@ const fontStyles = `
 `;
 
 async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
+  // Clean up the paths by removing any .pdf in the middle of filenames
+  const cleanOutputPath = outputPdfPath.replace(/\.pdf(?=.*\.pdf)/g, '');
+  
   // Create temporary paths for our split PDFs
-  const firstPagePdfPath = outputPdfPath.replace('.pdf', '_first.pdf');
-  const remainingPagesPdfPath = outputPdfPath.replace('.pdf', '_remaining.pdf');
+  const firstPagePdfPath = cleanOutputPath.replace(/\.pdf$/, '_first.pdf');
+  const remainingPagesPdfPath = cleanOutputPath.replace(/\.pdf$/, '_remaining.pdf');
   
   const page = await browser.newPage();
   await page.goto(`file://${htmlPath}`, { 
@@ -185,11 +188,19 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
   await page.pdf(remainingPagesOptions);
   
   // Merge PDFs
-  await mergePdfs(firstPagePdfPath, remainingPagesPdfPath, outputPdfPath);
+  await mergePdfs(firstPagePdfPath, remainingPagesPdfPath, cleanOutputPath);
   
   // Cleanup temporary files
-  fs.unlinkSync(firstPagePdfPath);
-  fs.unlinkSync(remainingPagesPdfPath);
+  try {
+    if (fs.existsSync(firstPagePdfPath)) {
+      fs.unlinkSync(firstPagePdfPath);
+    }
+    if (fs.existsSync(remainingPagesPdfPath)) {
+      fs.unlinkSync(remainingPagesPdfPath);
+    }
+  } catch (cleanupError) {
+    console.warn('Warning: Error cleaning up temporary files:', cleanupError);
+  }
   
   await page.close();
 }
