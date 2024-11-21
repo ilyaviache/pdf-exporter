@@ -251,14 +251,14 @@ async function processHtml(inputPath, outputPath, imageFolderPath, browser) {
     }
 
     /* Add vertical line */
-    #preview-content > .main-title:before {
-      content: "";
-      position: absolute;
-      left: 100px;
-      top: 2px;
-      height: ${totalHeight}px;
-      border-left: 1px solid #000000;
-    }
+    // #preview-content > .main-title:before {
+    //   content: "";
+    //   position: absolute;
+    //   left: 100px;
+    //   top: 2px;
+    //   height: ${totalHeight}px;
+    //   border-left: 1px solid #000000;
+    // }
 
     #preview-content {
       padding-top: 20px;
