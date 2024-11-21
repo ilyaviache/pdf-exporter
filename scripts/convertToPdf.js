@@ -69,7 +69,7 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
       ">
         <span style="
           font-family: 'Newton-Bold', Arial !important;
-          font-size: 14px;
+          font-size: 15px;
         ">
           ${titleHeader + ' ' + journalDate}
         </span>
@@ -87,19 +87,19 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
       ">
         <span style="
           font-family: 'Newton-Regular', Arial !important;
-          font-size: 11px;
+          font-size: 12px;
         ">
           © The Author(s) 2024
         </span>
         <span style="
           font-family: 'Newton-Regular', Arial !important;
-          font-size: 11px;
+          font-size: 12px;
         ">
           ${doiLink}
         </span>
         <span style="
           font-family: 'Newton-Bold', Arial !important;
-          font-size: 11px;
+          font-size: 12px;
         ">
           Nauka Publishers
         </span>
@@ -138,7 +138,7 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
         </span>
         <a href="${doiLink}" style="
           font-family: 'NewtonC';
-          font-size: 11px;
+          font-size: 12px;
           color: #000000;
           text-decoration: none;
         ">
@@ -164,13 +164,13 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
         </span>
         <span style="
           font-family: 'Newton-Bold', Arial !important;
-          font-size: 11px;
+          font-size: 12px;
           padding-right: 10px;
         ">
           Nauka Publishers <span style="
             font-family: 'Newton-Bold', Arial !important;
             font-weight: bold;
-            font-size: 11px;
+            font-size: 12px;
             padding-left: 10px;
           " class="pageNumber"></span>
         </span>
