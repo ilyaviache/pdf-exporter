@@ -48,38 +48,38 @@ function extractSurnames(html) {
   return Array.from(uniqueSurnames);
 }
 
-async function calculateTotalHeight(browser, inputPath) {
-  const page = await browser.newPage();
-  await page.goto('file://' + inputPath, { waitUntil: 'domcontentloaded' });
+// async function calculateTotalHeight(browser, inputPath) {
+//   const page = await browser.newPage();
+//   await page.goto('file://' + inputPath, { waitUntil: 'domcontentloaded' });
 
-  // Calculate the height of the first 4 elements and update the CSS dynamically
-  const totalHeight = await page.evaluate(() => {
-    const elements = document.querySelectorAll('#preview-content > *');
-    const first4 = Array.from(elements).slice(0, 4);
+//   // Calculate the height of the first 4 elements and update the CSS dynamically
+//   const totalHeight = await page.evaluate(() => {
+//     const elements = document.querySelectorAll('#preview-content > *');
+//     const first4 = Array.from(elements).slice(0, 4);
 
-    // Calculate the total height of the first 4 elements
-    const heights = first4.map(el => el.offsetHeight);
-    const totalHeight = heights.reduce((sum, height) => sum + height, 0);
+//     // Calculate the total height of the first 4 elements
+//     const heights = first4.map(el => el.offsetHeight);
+//     const totalHeight = heights.reduce((sum, height) => sum + height, 0);
 
-    // Update the height for the vertical line
-    const mainTitle = document.querySelector('#preview-content > .main-title:before');
-    if (mainTitle) {
-      mainTitle.style.height = `${totalHeight}px`;
-    }
+//     // Update the height for the vertical line
+//     const mainTitle = document.querySelector('#preview-content > .main-title:before');
+//     if (mainTitle) {
+//       mainTitle.style.height = `${totalHeight}px`;
+//     }
 
-    return totalHeight;
-  });
+//     return totalHeight;
+//   });
 
-  // console.log(`Total height of the first 4 elements: ${totalHeight}px`);
+//   // console.log(`Total height of the first 4 elements: ${totalHeight}px`);
 
-  // // Save the final HTML with updated dynamic CSS
-  const finalHtml = await page.content();
-  fs.writeFileSync(inputPath, finalHtml, 'utf8');
+//   // // Save the final HTML with updated dynamic CSS
+//   const finalHtml = await page.content();
+//   fs.writeFileSync(inputPath, finalHtml, 'utf8');
 
-  await page.close();
+//   await page.close();
 
-  return { totalHeight };
-}
+//   return { totalHeight };
+// }
 
 
 
@@ -272,37 +272,38 @@ async function processHtml(inputPath, outputPath, imageFolderPath, browser) {
   // Remove existing style tag if it exists
   // $('style').remove();
   
-  const authors = extractSurnames(html);
+  // const authors = extractSurnames(html);
+  const authors = [];
   // Add new style tag with combined styles at the end of HTML to override other styles
   $('body').append(`<style>${customStyles}</style>`);
 
   // Set body background color to light gray
-  $('#preview').css('background', '#f0f0f0');
+  // $('#preview').css('background', '#f0f0f0');
 
-  // Handle Keywords and DOI formatting
-  const targetDiv = $('#preview-content > div:nth-child(4)');
+  // // Handle Keywords and DOI formatting
+  // const targetDiv = $('#preview-content > div:nth-child(4)');
 
-  if (targetDiv.length) {
-    let text = targetDiv.html();
+  // if (targetDiv.length) {
+  //   let text = targetDiv.html();
     
-    // Handle Keywords
-    text = text.replace(
-      /^Keywords:/, 
-      '<span class="bold">Keywords:</span>'
-    );
+  //   // Handle Keywords
+  //   text = text.replace(
+  //     /^Keywords:/, 
+  //     '<span class="bold">Keywords:</span>'
+  //   );
     
-    // Handle DOI (skip if already wrapped in bold)
-    if (!text.includes('<span class="bold">DOI:')) {
-      text = text.replace(
-        /(DOI:\s*)([\d./\-A-Z]+)(,\s*EDN:)/i,
-        '<span class="bold">DOI: </span>$2$3'
-      );
-    }
+  //   // Handle DOI (skip if already wrapped in bold)
+  //   if (!text.includes('<span class="bold">DOI:')) {
+  //     text = text.replace(
+  //       /(DOI:\s*)([\d./\-A-Z]+)(,\s*EDN:)/i,
+  //       '<span class="bold">DOI: </span>$2$3'
+  //     );
+  //   }
     
-    targetDiv.html(text);
-  } else {
-    console.warn('Keywords/DOI div not found');
-  }
+  //   targetDiv.html(text);
+  // } else {
+  //   console.warn('Keywords/DOI div not found');
+  // }
   // DOI SEARCH STARTS
   
   let doi = '';

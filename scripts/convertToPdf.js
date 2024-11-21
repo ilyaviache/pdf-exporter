@@ -28,13 +28,17 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
   const remainingPagesPdfPath = outputPdfPath.replace('.pdf', '_remaining.pdf');
   
   const page = await browser.newPage();
-  await page.goto(`file://${htmlPath}`, { waitUntil: 'networkidle0' });
+  await page.goto(`file://${htmlPath}`, { 
+    waitUntil: 'domcontentloaded',
+    timeout: 60000
+  });
   
   const doiLink = 'https://doi.org/' + meta.doi;
   
-  const authorsHeader = meta.authors.length === 1 ? meta.authors[0] :
-    meta.authors.length === 2 ? `${meta.authors[0]}, ${meta.authors[1]}` :
-    `${meta.authors[0]}, ${meta.authors[1]}, et al.`;
+  // const authorsHeader = meta.authors.length === 1 ? meta.authors[0] :
+  //   meta.authors.length === 2 ? `${meta.authors[0]}, ${meta.authors[1]}` :
+  //   `${meta.authors[0]}, ${meta.authors[1]}, et al.`;
+  const authorsHeader = '';
 
    // Use parent folder name as the title header
    const titleHeader = findJournalTranslation(meta.parentFolderName) || '';
