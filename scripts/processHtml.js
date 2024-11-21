@@ -314,34 +314,23 @@ async function processHtml(inputPath, outputPath, imageFolderPath, browser) {
   $('#preview-content').find('*').contents().each(function() {
     if (doiNumber) return false; // Stop searching after first match
     
-    if (this.nodeType === 3) { // Text nodes only
-      const text = $(this).text();
-      const match = text.match(/DOI:\s*([\d./\-A-Z]+)(?:\s*,?\s*EDN:)/i);
-      
-      if (match && match[1]) {
-        doiNumber = match[1];
-        foundNode = this;
-        return false; // Break the .each() loop
-      }
+    // Check both text nodes and cdiv contents
+    const text = this.nodeType === 3 ? 
+      $(this).text() : 
+      ($(this).is('cdiv') ? $(this).text() : '');
+    
+    const match = text.match(/DOI:\s*([\w./-]+)(?:\s*,?\s*EDN:)?/i);
+    
+    if (match && match[1]) {
+      doiNumber = match[1];
+      foundNode = this;
+      return false;
     }
   });
 
   if (doiNumber) {
     const modifiedDoi = doiNumber.slice(0, -4) + 'e' + doiNumber.slice(-3);
     doi = modifiedDoi; // Save for later use
-    
-    if (foundNode && foundNode.textContent) {
-      $(foundNode).replaceWith(foundNode.textContent.replace(
-        /(DOI:\s*)([\d./\-A-Z]+)(,\s*EDN:)/i,
-        `<span class="bold">DOI: </span>${modifiedDoi}$3`
-      ));
-    } else {
-      // console.warn('Found DOI number but node content is invalid:', {
-      //   doiNumber,
-      //   foundNode: foundNode ? 'exists' : 'null',
-      //   textContent: foundNode?.textContent
-      // });
-    }
 
     // Then update all other references to this DOI throughout the document
     $('#preview-content').find('*').contents().each(function() {
