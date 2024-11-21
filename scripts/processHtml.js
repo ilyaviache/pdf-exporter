@@ -209,7 +209,7 @@ async function processHtml(inputPath, outputPath, imageFolderPath, browser) {
     #preview-content .main-title {
       padding-left: 114px;
       padding-top: 0px;
-      font-size: 22px;
+      font-size: 24px;
       font-family: Newton-Bold;
     }
 

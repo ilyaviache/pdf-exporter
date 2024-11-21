@@ -69,7 +69,7 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
       ">
         <span style="
           font-family: 'Newton-Bold', Arial !important;
-          font-size: 15px;
+          font-size: 14px;
         ">
           ${titleHeader + ' ' + journalDate}
         </span>
