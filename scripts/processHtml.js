@@ -320,11 +320,27 @@ async function processHtml(inputPath, outputPath, imageFolderPath, browser) {
       const modifiedDoi = doiNumber.slice(0, -4) + 'e' + doiNumber.slice(-3);
       doi = modifiedDoi;
       
+      // First update the original DOI div
       const newText = originalText.replace(
         /(DOI:\s*)([\d./\-A-Z]+)(,\s*EDN:)/i, 
         `<span class="bold">DOI: </span>${modifiedDoi}$3`
       );
       div.html(newText);
+
+      // Then scan all children of #preview-content for DOI references
+      $('#preview-content').find('*').contents().each(function() {
+        if (this.nodeType === 3) { // Text nodes only
+          const text = $(this).text();
+          if (text.includes(`DOI: ${doiNumber}`)) {
+            const updatedText = text.replace(
+              `DOI: ${doiNumber}`,
+              `<span class="bold">DOI: </span> ${modifiedDoi}`
+            );
+            $(this).replaceWith(updatedText);
+          }
+        }
+      });
+      
       return true;
     }
     return false;
@@ -351,12 +367,12 @@ async function processHtml(inputPath, outputPath, imageFolderPath, browser) {
     console.warn('!!!!!!!!!!!!! DOI not found in any expected location');
     console.log('inputPath:', inputPath);
     // Log the text content of each attempted location for debugging
-    selectors.forEach((getDiv, index) => {
-      const div = getDiv();
-      if (div.length) {
-        console.log(`Location ${index + 1} content:`, div.text());
-      }
-    });
+    // selectors.forEach((getDiv, index) => {
+    //   const div = getDiv();
+    //   if (div.length) {
+    //     console.log(`Location ${index + 1} content:`, div.text());
+    //   }
+    // });
   }
 
     // if (doiDiv.length) {
