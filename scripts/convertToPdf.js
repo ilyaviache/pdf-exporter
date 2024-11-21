@@ -3,6 +3,25 @@ import { PDFDocument } from 'pdf-lib';
 import fs from 'fs';
 import { findJournalTranslation } from './journalNames.js';
 
+const fontStyles = `
+  @font-face {
+    font-family: 'Newton-BoldItalic';
+    src: url('data:font/opentype;base64,${fs.readFileSync('./fonts/NEWTON-BOLDITALIC.OTF').toString('base64')}') format('opentype');
+  }
+  @font-face {
+    font-family: 'Newton-Regular';
+    src: url('data:font/opentype;base64,${fs.readFileSync('./fonts/NEWTON-REGULAR.OTF').toString('base64')}') format('opentype');
+  }
+  @font-face {
+    font-family: 'Newton-Bold';
+    src: url('data:font/opentype;base64,${fs.readFileSync('./fonts/NEWTON-BOLD.OTF').toString('base64')}') format('opentype');
+  }
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+`;
+
 async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
   // Create temporary paths for our split PDFs
   const firstPagePdfPath = outputPdfPath.replace('.pdf', '_first.pdf');
@@ -19,7 +38,7 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
 
    // Use parent folder name as the title header
    const titleHeader = findJournalTranslation(meta.parentFolderName) || 'Physics of Metals and Metallography';
-  //  console.log('titleHeader', titleHeader);
+  console.log('titleHeader', titleHeader);
 
   // First page options
   const firstPageOptions = {
@@ -27,6 +46,7 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
     format: 'A4',
     displayHeaderFooter: true,
     headerTemplate: `
+      <style>${fontStyles}</style>
       <div style="
         width: 100%;
         padding: 0px 0px 10px;
@@ -37,7 +57,7 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
         border-bottom: 0.5px solid #d0d0d0;
       ">
         <span style="
-          font-family: 'Newton-BoldItalic';
+          font-family: 'Newton-BoldItalic', Arial !important;
           font-size: 14px;
         ">
           ${titleHeader}
@@ -45,6 +65,7 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
       </div>
     `,
     footerTemplate: `
+    <style>${fontStyles}</style>
       <div style="
         width: 100%;
         padding: 10px 0px 0px;
@@ -54,19 +75,19 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
         border-top: 0.5px solid #d0d0d0;
       ">
         <span style="
-          font-family: 'Newton-Regular';
+          font-family: 'Newton-Regular', Arial !important;
           font-size: 11px;
         ">
           © The Author(s) 2024
         </span>
         <span style="
-          font-family: 'Newton-Regular';
+          font-family: 'Newton-Regular', Arial !important;
           font-size: 11px;
         ">
           ${doiLink}
         </span>
         <span style="
-          font-family: 'Newton-Bold';
+          font-family: 'Newton-Bold', Arial !important;
           font-size: 11px;
         ">
           Nauka Publishers
@@ -88,6 +109,7 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
     format: 'A4',
     displayHeaderFooter: true,
     headerTemplate: `
+    <style>${fontStyles}</style>
       <div style="
         width: 100%;
         padding: 0px 0px 10px;
@@ -98,7 +120,7 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
         border-bottom: 0.5px solid #d0d0d0;
       ">
         <span style="
-          font-family: 'Newton-BoldItalic';
+          font-family: 'Newton-BoldItalic', Arial !important;
           font-size: 14px;
         ">
           ${authorsHeader}
@@ -114,6 +136,7 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
       </div>
     `,
     footerTemplate: `
+    <style>${fontStyles}</style>
       <div style="
         width: 100%;
         padding: 10px 0px 0px;
@@ -123,18 +146,18 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
         border-top: 0.5px solid #d0d0d0;
       ">
         <span style="
-          font-family: 'Newton-Regular';
+          font-family: 'Newton-Regular', Arial !important;
           font-size: 11px;
         ">
           ${titleHeader}
         </span>
         <span style="
-          font-family: 'Newton-Bold';
+          font-family: 'Newton-Bold', Arial !important;
           font-size: 11px;
           padding-right: 10px;
         ">
           Nauka Publishers <span style="
-            font-family: 'Newton-Bold';
+            font-family: 'Newton-Bold', Arial !important;
             font-weight: bold;
             font-size: 11px;
             padding-left: 10px;
