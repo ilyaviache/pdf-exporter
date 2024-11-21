@@ -19,6 +19,7 @@ function getValidItems(inputDir) {
   const files = fs.readdirSync(inputDir);
 
   for (const item of files) {
+    // Skip hidden files and special directories
     if (item.startsWith('.') || 
         item === 'images' || 
         item === 'init_images') continue;
@@ -26,11 +27,18 @@ function getValidItems(inputDir) {
     const fullPath = path.join(inputDir, item);
     const ext = path.extname(fullPath).toLowerCase();
     
-    if (ext === '.html' || ext === '.pdf') {
+    // Only include HTML files that start with 'image_modified'
+    if (ext === '.html' && item.startsWith('image_modified')) {
       items.push({
         name: item,
         path: fullPath,
-        type: ext.slice(1) // 'html' or 'pdf'
+        type: ext.slice(1) // 'html'
+      });
+    } else if (ext === '.pdf') {
+      items.push({
+        name: item,
+        path: fullPath,
+        type: ext.slice(1) // 'pdf'
       });
     }
   }
