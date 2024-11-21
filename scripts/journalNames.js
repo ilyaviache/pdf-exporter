@@ -2,6 +2,7 @@ const journalTranslations = {
   'Автоматика и телемеханика': 'Automation and Remote Control',
   'Акустический журнал': 'Acoustical Physics',
   'Астрономический вестник': 'Solar System Research',
+  'Астрономический вестник. Исследования солнечной системы': 'Solar System Research',
   'Астрономический журнал': 'Astronomy Reports',
   'Биологические мембраны': 'Membrane and Cell Biology',
   'Биология внутренних вод': 'Inland Water Biology',

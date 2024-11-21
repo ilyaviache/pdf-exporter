@@ -49,6 +49,8 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
     console.log('!!!!!!!!!!!!! No journal translation found for:', meta.parentFolderName, htmlPath);
    }
 
+   const journalDate = meta.journalDate.replace(/-/g, ' ') || '';
+
   // First page options
   const firstPageOptions = {
     path: firstPagePdfPath,
@@ -69,7 +71,7 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
           font-family: 'Newton-Bold', Arial !important;
           font-size: 14px;
         ">
-          ${titleHeader}
+          ${titleHeader + ' ' + journalDate}
         </span>
       </div>
     `,
@@ -158,7 +160,7 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
           font-family: 'Newton-Regular', Arial !important;
           font-size: 11px;
         ">
-          ${titleHeader}
+          ${titleHeader + ' ' + journalDate}
         </span>
         <span style="
           font-family: 'Newton-Bold', Arial !important;

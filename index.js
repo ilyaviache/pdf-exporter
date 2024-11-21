@@ -55,7 +55,7 @@ function clearOutputFolder(folderPath) {
   }
 }
 
-async function processSingleFolder(inputDir, outputDir, browser, parentFolderName) {
+async function processSingleFolder(inputDir, outputDir, browser, { journalName, journalDate }) {
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true, encoding: 'utf8' });
   }
@@ -90,7 +90,12 @@ async function processSingleFolder(inputDir, outputDir, browser, parentFolderNam
           processedHtmlPath, 
           outputPdfPath, 
           browser, 
-          { ...meta, pdfMetadata, parentFolderName }
+          { 
+            ...meta, 
+            pdfMetadata, 
+            parentFolderName: journalName,
+            journalDate 
+          }
         );
       } catch (error) {
         console.error(`!!!!!!!!!!!!! Error processing file ${item.name}:`, error);
@@ -151,11 +156,21 @@ async function main() {
       });
 
     // Process each parent folder sequentially
+    // Process each parent folder sequentially
     for (const parentFolder of parentFolders) {
-      // Extract journal name (text before first "-")
-      const journalName = parentFolder.split('-')[0].trim();
+      // Split the folder name by '-' and extract components
+       // Split the folder name by '-'
+      const parts = parentFolder.split('-');
+      
+      // Extract journal name (first part)
+      const journalName = parts[0].trim();
+      
+      // Extract date (second and third parts if they exist)
+      const journalDate = parts.length >= 3 ? `${parts[1].trim()}-${parts[2].trim()}` : '';
+
       console.log(`Processing parent folder: ${parentFolder}`);
       console.log(`Journal name: ${journalName}`);
+      console.log(`Journal date: ${journalDate}`);
 
       const parentPath = path.join(inputDir, parentFolder);
       const parentOutputPath = path.join(outputDir, parentFolder);
@@ -188,7 +203,10 @@ async function main() {
           const outputPath = path.join(parentOutputPath, cleanSubFolder);
           
           try {
-            await processSingleFolder(inputPath, outputPath, browser, journalName);
+            await processSingleFolder(inputPath, outputPath, browser, {
+              journalName,
+              journalDate
+            });
           } catch (error) {
             console.error(`!!!!!!!!!!!!! Error processing subfolder ${subFolder} in ${parentFolder}:`, error);
           }
