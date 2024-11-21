@@ -313,7 +313,9 @@ async function processHtml(inputPath, outputPath, imageFolderPath, browser) {
 
   if (doiDiv.length) {
     const originalText = doiDiv.text();
+    console.log('originalText', originalText);
     const doiMatch = originalText.match(/DOI:\s*([\d./\-A-Z]+)(?:,\s*)?EDN:/i);
+    console.log('doiMatch', doiMatch);
     
     if (doiMatch && doiMatch[1]) {
       const doiNumber = doiMatch[1];
@@ -327,10 +329,10 @@ async function processHtml(inputPath, outputPath, imageFolderPath, browser) {
       );
       doiDiv.html(newText);
     } else {
-      console.warn('DOI pattern not found in text');
+      console.warn('!!!!!!!!!!!!! DOI pattern not found in text');
     }
   } else {
-    console.warn('DOI div not found');
+    console.warn('!!!!!!!!!!!!! DOI div not found');
   }
 
 

@@ -37,8 +37,10 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
     `${meta.authors[0]}, ${meta.authors[1]}, et al.`;
 
    // Use parent folder name as the title header
-   const titleHeader = findJournalTranslation(meta.parentFolderName) || 'Physics of Metals and Metallography';
-  console.log('titleHeader', titleHeader);
+   const titleHeader = findJournalTranslation(meta.parentFolderName) || '';
+   if (!titleHeader) {
+    console.log('!!!!!!!!!!!!! No journal translation found for:', meta.parentFolderName, htmlPath);
+   }
 
   // First page options
   const firstPageOptions = {
@@ -57,7 +59,7 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
         border-bottom: 0.5px solid #d0d0d0;
       ">
         <span style="
-          font-family: 'Newton-BoldItalic', Arial !important;
+          font-family: 'Newton-Bold', Arial !important;
           font-size: 14px;
         ">
           ${titleHeader}
@@ -120,8 +122,8 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
         border-bottom: 0.5px solid #d0d0d0;
       ">
         <span style="
-          font-family: 'Newton-BoldItalic', Arial !important;
-          font-size: 14px;
+          font-family: 'Newton-Bold', Arial !important;
+          font-size: 13px;
         ">
           ${authorsHeader}
         </span>

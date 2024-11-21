@@ -104,5 +104,19 @@ const journalTranslations = {
 }
 
 export function findJournalTranslation(russianName) {
-  return journalTranslations[russianName] || null;
+  if (!russianName) return null;
+  
+  // Normalize the input string
+  const normalizedName = russianName.trim()
+    .normalize('NFKC'); // Use NFKC normalization for better compatibility
+    
+  // Normalize all keys for comparison
+  const normalizedTranslations = Object.fromEntries(
+    Object.entries(journalTranslations).map(([key, value]) => [
+      key.normalize('NFKC'),
+      value
+    ])
+  );
+  
+  return normalizedTranslations[normalizedName] || null;
 }

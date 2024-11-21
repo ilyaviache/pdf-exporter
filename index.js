@@ -56,7 +56,7 @@ function clearOutputFolder(folderPath) {
 
 async function processSingleFolder(inputDir, outputDir, browser, parentFolderName) {
   if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true });
+    fs.mkdirSync(outputDir, { recursive: true, encoding: 'utf8' });
   }
 
   const items = getValidItems(inputDir);
@@ -114,7 +114,7 @@ async function extractPdfContent(pdfPath) {
       keywords,
     };
   } catch (error) {
-    console.error('Error extracting PDF content:', error);
+    console.error('!!!!!!!!!!!!! Error extracting PDF content:', error);
     return null;
   }
 }
@@ -161,7 +161,7 @@ async function main() {
 
       // Create parent output directory if it doesn't exist
       if (!fs.existsSync(parentOutputPath)) {
-        fs.mkdirSync(parentOutputPath, { recursive: true });
+        fs.mkdirSync(parentOutputPath, { recursive: true, encoding: 'utf8' });
       }
 
       // Process subfolders concurrently within each parent folder
@@ -175,7 +175,7 @@ async function main() {
             // Pass the journal name instead of full parent folder name
             await processSingleFolder(inputPath, outputPath, browser, journalName);
           } catch (error) {
-            console.error(`Error processing subfolder ${subFolder} in ${parentFolder}:`, error);
+            console.error(`!!!!!!!!!!!!! Error processing subfolder ${subFolder} in ${parentFolder}:`, error);
           }
         },
         { concurrency: BATCH_SIZE }
@@ -186,40 +186,11 @@ async function main() {
 
     console.log('All processing complete!');
   } catch (error) {
-    console.error('Error during processing:', error);
+    console.error('!!!!!!!!!!!!!Error during processing:', error);
   } finally {
     await browser.close();
   }
 }
-// async function main2() {
-//   const browser = await puppeteer.launch({
-//     args: ['--no-sandbox', '--disable-setuid-sandbox']
-//   });
-
-//   try {
-//     while (true) {
-//       console.log('Waiting for messages...');
-      
-//       // Receive messages from SQS
-//       const messages = await receiveMessages(BATCH_SIZE);
-      
-//       if (messages.length === 0) {
-//         console.log('No messages to process');
-//         // Optional: Add delay before next polling
-//         await new Promise(resolve => setTimeout(resolve, 5000));
-//         continue;
-//       }
-
-//       console.log(`Received ${messages.length} messages`);
-//     }
-//   } catch (error) {
-//     console.error('Fatal error:', error);
-//   } finally {
-//     await browser.close();
-//   }
-// }
-
-
 
 main().catch(console.error);
-//main2().catch(console.error);
+//main2().catch(console.error)
