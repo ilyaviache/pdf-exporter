@@ -2,7 +2,6 @@ import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron'
 import { fileURLToPath } from 'url'
 import path from 'path'
 import { dirname } from 'path'
-import { exec } from 'child_process'
 import fs from 'fs'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -11,31 +10,12 @@ const __dirname = dirname(__filename)
 // Get the app path based on whether we're in development or production
 const getAppPath = () => {
   if (app.isPackaged) {
-    // In production, use different paths for Windows and macOS
-    if (process.platform === 'win32') {
-      return path.dirname(app.getPath('exe'))
-    } else if (process.platform === 'darwin') {
-      // On macOS, we need to go up several levels from the exe path
-      // as the executable is deep inside the .app bundle
-      return path.join(app.getPath('exe'), '../../..')
-    }
-    return path.dirname(app.getPath('exe'))
+    // In production, use the resources path
+    return path.join(process.resourcesPath)
   } else {
     // In development, use the project root
     return path.join(__dirname, '..')
   }
-}
-
-// Get the node executable path
-const getNodePath = () => {
-  if (app.isPackaged) {
-    if (process.platform === 'win32') {
-      return 'node.exe'
-    } else {
-      return 'node'
-    }
-  }
-  return 'node'
 }
 
 let mainWindow
@@ -51,6 +31,9 @@ const createWindow = () => {
   })
 
   mainWindow.loadFile(path.join(__dirname, 'index.html'))
+  
+  // Uncomment to open DevTools in development
+  // if (!app.isPackaged) {
 }
 
 app.whenReady().then(() => {
@@ -84,25 +67,23 @@ ipcMain.on('process-files', async (event) => {
       fs.mkdirSync(outputDir, { recursive: true })
     }
 
-    // Run the processing script
-    const scriptPath = path.join(appPath, 'index.js')
-    const nodePath = getNodePath()
-    
-    exec(`"${nodePath}" "${scriptPath}"`, { 
-      cwd: appPath,
-      shell: process.platform === 'win32' ? 'cmd.exe' : '/bin/bash'
-    }, (error, stdout, stderr) => {
-      if (error) {
-        console.error('Error:', error)
-        console.error('Stderr:', stderr)
-        event.reply('process-complete', { success: false, error: error.message })
-        return
-      }
-      event.reply('process-complete', { success: true, output: stdout })
-    })
+    // Process the files using the imported function
+    try {
+      await processFiles(appPath)
+      event.reply('process-complete', { success: true })
+    } catch (error) {
+      console.error('Error processing files:', error)
+      event.reply('process-complete', { 
+        success: false, 
+        error: `Error processing files: ${error.message}`
+      })
+    }
   } catch (error) {
     console.error('Caught error:', error)
-    event.reply('process-complete', { success: false, error: error.message })
+    event.reply('process-complete', { 
+      success: false, 
+      error: `General error: ${error.message}`
+    })
   }
 })
 

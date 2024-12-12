@@ -4,8 +4,8 @@ import pMap from 'p-map';
 import processHtml from './scripts/processHtml.js';
 import convertToPdf from './scripts/convertToPdf.js';
 import puppeteer from 'puppeteer';
-import { receiveMessages, deleteMessage } from './config/aws.js';
 import { PDFDocument } from 'pdf-lib';
+import { fileURLToPath } from 'url';
 
 const BATCH_SIZE = 8; // Number of folders to process concurrently
 
@@ -51,7 +51,6 @@ function clearOutputFolder(folderPath) {
         fs.unlinkSync(filePath);
       }
     });
-    // console.log(`Output folder cleared: ${folderPath}`);
   }
 }
 
@@ -66,14 +65,9 @@ async function processSingleFolder(inputDir, outputDir, browser, { journalName, 
   // Then process HTML files
   for (const item of items) {
     if (item.type === 'html') {
-      // Clean up the filename by:
-      // 1. Remove .html extension
-      // 2. Remove any .pdf within the filename
-      // 3. Remove any _translated suffix
       const baseName = path.basename(item.name, '.html')
         .replace('.pdf', '')
       
-      // Construct paths without nesting directories
       const processedHtmlPath = path.join(outputDir, `${baseName}.html`);
       const outputPdfPath = path.join(outputDir, `${baseName}.pdf`);
 
@@ -98,52 +92,20 @@ async function processSingleFolder(inputDir, outputDir, browser, { journalName, 
           }
         );
       } catch (error) {
-        console.error(`!!!!!!!!!!!!! Error processing file ${item.name}:`, error);
+        console.error(`Error processing file ${item.name}:`, error);
       }
     }
   }
 }
 
-async function extractPdfContent(pdfPath) {
-  try {
-    const pdfBytes = fs.readFileSync(pdfPath);
-    const pdfDoc = await PDFDocument.load(pdfBytes);
-
-    // Extract the first page
-    const firstPage = pdfDoc.getPage(0);
-
-    // Get all the text content from the first page
-    const textContent = await firstPage.getTextContent();
-    const textLines = textContent.items.map(item => item.str);
-
-    // Extract the header (assuming it's the first line)
-    const header = textLines[0] || '';
-    console.log('Extracted header:', header);
-
-    // Optionally, extract additional metadata
-    const title = pdfDoc.getTitle() || '';
-    const authors = pdfDoc.getAuthor() || '';
-    const keywords = pdfDoc.getKeywords() || '';
-
-    return {
-      header,
-      title,
-      authors,
-      keywords,
-    };
-  } catch (error) {
-    console.error('!!!!!!!!!!!!! Error extracting PDF content:', error);
-    return null;
-  }
-}
-
-
-// Main function to process all folders in batches
-// Main function to process all folders in batches
-async function main() {
-  const inputDir = path.join(path.resolve(), 'input-html');
-  const outputDir = path.join(path.resolve(), 'output');
-  const browser = await puppeteer.launch();
+// Main processing function that will be exported
+export async function processFiles(appPath) {
+  const inputDir = path.join(appPath, 'input-html');
+  const outputDir = path.join(appPath, 'output');
+  const browser = await puppeteer.launch({
+    headless: 'new',
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+  });
 
   try {
     clearOutputFolder(outputDir);
@@ -156,16 +118,9 @@ async function main() {
       });
 
     // Process each parent folder sequentially
-    // Process each parent folder sequentially
     for (const parentFolder of parentFolders) {
-      // Split the folder name by '-' and extract components
-       // Split the folder name by '-'
       const parts = parentFolder.split('-');
-      
-      // Extract journal name (first part)
       const journalName = parts[0].trim();
-      
-      // Extract date (second and third parts if they exist)
       const journalDate = parts.length >= 3 ? `${parts[1].trim()}-${parts[2].trim()}` : '';
 
       console.log(`Processing parent folder: ${parentFolder}`);
@@ -196,9 +151,7 @@ async function main() {
       await pMap(
         subFolders,
         async subFolder => {
-          // Clean up subfolder name by removing .pdf if present
           const cleanSubFolder = subFolder.replace('.pdf', '');
-          
           const inputPath = path.join(parentPath, subFolder);
           const outputPath = path.join(parentOutputPath, cleanSubFolder);
           
@@ -208,7 +161,7 @@ async function main() {
               journalDate
             });
           } catch (error) {
-            console.error(`!!!!!!!!!!!!! Error processing subfolder ${subFolder} in ${parentFolder}:`, error);
+            console.error(`Error processing subfolder ${subFolder} in ${parentFolder}:`, error);
           }
         },
         { concurrency: BATCH_SIZE }
@@ -218,12 +171,20 @@ async function main() {
     }
 
     console.log('All processing complete!');
+    return true;
   } catch (error) {
-    console.error('!!!!!!!!!!!!!Error during processing:', error);
+    console.error('Error during processing:', error);
+    throw error;
   } finally {
     await browser.close();
   }
 }
 
-main().catch(console.error);
-//main2().catch(console.error)
+// For backwards compatibility when running directly
+if (typeof process !== 'undefined' && process.argv && process.argv[1] === fileURLToPath(import.meta.url)) {
+  processFiles(process.cwd())
+    .catch(error => {
+      console.error('Error:', error);
+      process.exit(1);
+    });
+}

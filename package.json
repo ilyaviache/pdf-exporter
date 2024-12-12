@@ -28,17 +28,39 @@
   },
   "build": {
     "appId": "com.pdfexporter.app",
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/puppeteer/.local-chromium/**/*"
+    ],
     "mac": {
-      "category": "public.app-category.utilities"
+      "category": "public.app-category.utilities",
+      "target": ["dmg"]
+    },
+    "win": {
+      "target": ["nsis"]
     },
     "files": [
       "electron/**/*",
       "scripts/**/*",
       "index.js",
-      "input-html",
-      "output",
-      "config",
-      "fonts"
+      "config/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "extraResources": [
+      {
+        "from": ".",
+        "to": ".",
+        "filter": [
+          "scripts/**/*",
+          "index.js",
+          "config/**/*",
+          "fonts/**/*"
+        ]
+      }
     ]
   }
 }
