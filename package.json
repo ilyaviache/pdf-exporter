@@ -2,7 +2,7 @@
   "name": "pdf-exporter",
   "version": "1.0.0",
   "description": "PDF Export Application",
-  "main": "electron/main.js",
+  "main": "./electron/main.js",
   "type": "module",
   "scripts": {
     "start": "node index.js",
@@ -20,7 +20,8 @@
     "p-map": "^7.0.0",
     "path": "^0.12.7",
     "pdf-lib": "^1.17.1",
-    "puppeteer": "^23.8.0"
+    "puppeteer": "^23.8.0",
+    "puppeteer-core": "^23.10.4"
   },
   "devDependencies": {
     "electron": "^28.0.0",
@@ -29,46 +30,27 @@
   "build": {
     "appId": "com.pdfexporter.app",
     "asar": false,
-    "asarUnpack": [
-      "node_modules/puppeteer/.local-chromium/**/*"
+    "files": [
+      "**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "node_modules/puppeteer/.local-chromium",
+        "to": "app/node_modules/puppeteer/.local-chromium",
+        "filter": [
+          "**/*"
+        ]
+      }
     ],
     "mac": {
-      "category": "public.app-category.utilities",
-      "target": ["dir"],
-      "identity": null,
-      "hardenedRuntime": false,
-      "gatekeeperAssess": false
+      "target": [
+        "dir"
+      ],
+      "identity": null
     },
-    "win": {
-      "target": ["nsis"]
-    },
-    "files": [
-      "electron/**/*",
-      "scripts/**/*",
-      "index.js",
-      "config/**/*",
-      "package.json",
-      "node_modules/**/*",
-      "fonts/**/*"
-    ],
     "directories": {
       "output": "dist",
       "buildResources": "build"
-    },
-    "extraResources": [
-      {
-        "from": "fonts",
-        "to": "fonts"
-      },
-      {
-        "from": ".",
-        "to": ".",
-        "filter": [
-          "scripts/**/*",
-          "index.js",
-          "config/**/*"
-        ]
-      }
-    ]
+    }
   }
 }

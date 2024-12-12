@@ -9,10 +9,18 @@ const __dirname = path.dirname(__filename)
 // Get the app path based on whether we're in development or production
 const getAppPath = () => {
   if (app.isPackaged) {
-    return process.resourcesPath
+    return path.join(app.getPath('userData'))
   } else {
     return path.join(__dirname, '..')
   }
+}
+
+// Get the resources path for Puppeteer
+const getResourcesPath = () => {
+  if (app.isPackaged) {
+    return path.join(process.resourcesPath, 'app')
+  }
+  return path.join(__dirname, '..')
 }
 
 let mainWindow
@@ -23,24 +31,51 @@ const createWindow = () => {
     height: 768,
     webPreferences: {
       nodeIntegration: true,
-      contextIsolation: false
+      contextIsolation: false,
+      webSecurity: false,
+      devTools: true
     }
   })
 
-  mainWindow.loadFile(path.join(__dirname, 'index.html'))
+  // Load the index.html file
+  const indexPath = app.isPackaged
+    ? path.join(__dirname, 'index.html')
+    : path.join(__dirname, 'index.html')
   
-  // Open DevTools in development
-  if (!app.isPackaged) {
-    mainWindow.webContents.openDevTools()
-  }
+  console.log('Loading index.html from:', indexPath)
+  console.log('App path:', app.getAppPath())
+  console.log('Resources path:', getResourcesPath())
+  console.log('Is packaged:', app.isPackaged)
+  
+  mainWindow.loadFile(indexPath)
+  
+  // Always open DevTools for debugging
+  mainWindow.webContents.openDevTools()
+
+  // Log any loading errors
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+    console.error('Failed to load:', errorCode, errorDescription)
+  })
 }
 
 app.whenReady().then(() => {
-  // Set up the resources path for the app
+  // Set up environment variables for Puppeteer
   if (app.isPackaged) {
-    process.resourcesPath = path.join(app.getAppPath(), '..', 'Resources')
+    process.env.PUPPETEER_EXECUTABLE_PATH = path.join(
+      getResourcesPath(),
+      'node_modules',
+      'puppeteer',
+      '.local-chromium',
+      // You might need to adjust this path based on your Puppeteer version and platform
+      'mac-arm64',
+      'chrome-mac-arm64',
+      'Chromium.app',
+      'Contents',
+      'MacOS',
+      'Chromium'
+    )
   }
-  
+
   createWindow()
 
   app.on('activate', () => {
@@ -74,12 +109,13 @@ ipcMain.on('process-files', async (event) => {
     try {
       // Import and run the processing script
       const indexPath = app.isPackaged 
-        ? path.join(process.resourcesPath, 'index.js')
+        ? path.join(getResourcesPath(), 'index.js')
         : path.join(__dirname, '..', 'index.js')
 
       console.log('Loading processing module from:', indexPath)
-      const { processFiles } = await import(`file://${indexPath}`)
+      console.log('Puppeteer executable path:', process.env.PUPPETEER_EXECUTABLE_PATH)
       
+      const { processFiles } = await import(`file://${indexPath}`)
       await processFiles(appPath)
       event.reply('process-complete', { success: true })
     } catch (error) {
