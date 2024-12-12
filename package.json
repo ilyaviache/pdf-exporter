@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node index.js",
     "electron:start": "electron .",
-    "electron:build": "electron-builder"
+    "electron:build": "electron-builder --mac --arm64"
   },
   "keywords": [],
   "author": "",
@@ -34,7 +34,10 @@
     ],
     "mac": {
       "category": "public.app-category.utilities",
-      "target": ["dmg"]
+      "target": ["dir"],
+      "identity": null,
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false
     },
     "win": {
       "target": ["nsis"]
