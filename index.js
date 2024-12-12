@@ -54,22 +54,23 @@ function clearOutputFolder(folderPath) {
   }
 }
 
-async function processSingleFolder(inputDir, outputDir, browser, { journalName, journalDate }) {
-  if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true, encoding: 'utf8' });
-  }
-
+async function processSingleFolder(inputDir, outputFilePath, browser, { journalName, journalDate }) {
   const items = getValidItems(inputDir);
   let pdfMetadata = null;
 
-  // Then process HTML files
+  // Process HTML files
   for (const item of items) {
     if (item.type === 'html') {
       const baseName = path.basename(item.name, '.html')
-        .replace('.pdf', '')
+        .replace('.pdf', '');
       
-      const processedHtmlPath = path.join(outputDir, `${baseName}.html`);
-      const outputPdfPath = path.join(outputDir, `${baseName}.pdf`);
+      // Create a temporary directory for intermediate files
+      const tempDir = path.join(path.dirname(outputFilePath), '.temp');
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
+      
+      const processedHtmlPath = path.join(tempDir, `${baseName}.html`);
 
       try {
         const meta = await processHtml(
@@ -82,7 +83,7 @@ async function processSingleFolder(inputDir, outputDir, browser, { journalName, 
 
         await convertToPdf(
           processedHtmlPath, 
-          outputPdfPath, 
+          outputFilePath, 
           browser, 
           { 
             ...meta, 
@@ -91,6 +92,11 @@ async function processSingleFolder(inputDir, outputDir, browser, { journalName, 
             journalDate 
           }
         );
+
+        // Clean up temporary files
+        if (fs.existsSync(tempDir)) {
+          fs.rmSync(tempDir, { recursive: true, force: true });
+        }
       } catch (error) {
         console.error(`Error processing file ${item.name}:`, error);
       }
@@ -110,64 +116,64 @@ export async function processFiles(appPath) {
   try {
     clearOutputFolder(outputDir);
 
-    // Get all parent folders
+    // Get all parent folders (journals)
     const parentFolders = fs.readdirSync(inputDir)
       .filter(folder => {
         const fullPath = path.join(inputDir, folder);
         return !folder.startsWith('.') && fs.lstatSync(fullPath).isDirectory();
       });
 
-    // Process each parent folder sequentially
+    // Process each journal folder sequentially
     for (const parentFolder of parentFolders) {
       const parts = parentFolder.split('-');
       const journalName = parts[0].trim();
       const journalDate = parts.length >= 3 ? `${parts[1].trim()}-${parts[2].trim()}` : '';
 
-      console.log(`Processing parent folder: ${parentFolder}`);
+      console.log(`Processing journal: ${parentFolder}`);
       console.log(`Journal name: ${journalName}`);
       console.log(`Journal date: ${journalDate}`);
 
       const parentPath = path.join(inputDir, parentFolder);
       const parentOutputPath = path.join(outputDir, parentFolder);
 
-      // Get subfolders within parent folder
-      const subFolders = fs.readdirSync(parentPath)
+      // Create journal output directory if it doesn't exist
+      if (!fs.existsSync(parentOutputPath)) {
+        fs.mkdirSync(parentOutputPath, { recursive: true });
+      }
+
+      // Get article folders
+      const articleFolders = fs.readdirSync(parentPath)
         .filter(folder => {
           const fullPath = path.join(parentPath, folder);
           return !folder.startsWith('.') && fs.lstatSync(fullPath).isDirectory();
         });
 
-      if (subFolders.length === 0) {
-        console.log(`No subfolders found in ${parentFolder}`);
+      if (articleFolders.length === 0) {
+        console.log(`No article folders found in ${parentFolder}`);
         continue;
       }
 
-      // Create parent output directory if it doesn't exist
-      if (!fs.existsSync(parentOutputPath)) {
-        fs.mkdirSync(parentOutputPath, { recursive: true, encoding: 'utf8' });
-      }
-
-      // Process subfolders concurrently within each parent folder
+      // Process articles concurrently
       await pMap(
-        subFolders,
-        async subFolder => {
-          const cleanSubFolder = subFolder.replace('.pdf', '');
-          const inputPath = path.join(parentPath, subFolder);
-          const outputPath = path.join(parentOutputPath, cleanSubFolder);
+        articleFolders,
+        async articleFolder => {
+          const cleanArticleName = articleFolder.replace('.pdf', '');
+          const inputPath = path.join(parentPath, articleFolder);
+          const outputFilePath = path.join(parentOutputPath, `${cleanArticleName}.pdf`);
           
           try {
-            await processSingleFolder(inputPath, outputPath, browser, {
+            await processSingleFolder(inputPath, outputFilePath, browser, {
               journalName,
               journalDate
             });
           } catch (error) {
-            console.error(`Error processing subfolder ${subFolder} in ${parentFolder}:`, error);
+            console.error(`Error processing article ${articleFolder} in ${parentFolder}:`, error);
           }
         },
         { concurrency: BATCH_SIZE }
       );
 
-      console.log(`Completed processing parent folder: ${parentFolder}`);
+      console.log(`Completed processing journal: ${parentFolder}`);
     }
 
     console.log('All processing complete!');
