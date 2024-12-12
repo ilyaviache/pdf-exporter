@@ -27,7 +27,7 @@ function getValidItems(inputDir) {
     const fullPath = path.join(inputDir, item);
     
     // Only include HTML files that start with 'image_modified'
-    if (item.startsWith('image_modified') && item.endsWith('.html')) {
+    if ((item.startsWith('image_modified') || item.startsWith('modified')) && item.endsWith('.html')) {
       items.push({
         name: item,
         path: fullPath,

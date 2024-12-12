@@ -65,7 +65,7 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border-bottom: 1.5px solid #d0d0d0;
+        border-bottom: 0.5px solid #000000;
       ">
         <span style="
           font-family: 'Newton-Bold', Arial !important;
@@ -83,7 +83,7 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
         margin: 0px 40px;
         display: flex;
         justify-content: space-between;
-        border-top: 1.5px solid #d0d0d0;
+        border-top: 0.5px solid #000000;
       ">
         <span style="
           font-family: 'Newton-Regular', Arial !important;
@@ -128,7 +128,7 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border-bottom: 1.5px solid #d0d0d0;
+        border-bottom: 0.5px solid #000000;
       ">
         <span style="
           font-family: 'Newton-Bold', Arial !important;
@@ -154,7 +154,7 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
         margin: 0px 40px;
         display: flex;
         justify-content: space-between;
-        border-top: 1.5px solid #d0d0d0;
+        border-top: 0.5px solid #000000;
       ">
         <span style="
           font-family: 'Newton-Regular', Arial !important;
