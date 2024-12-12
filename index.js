@@ -7,7 +7,24 @@ import puppeteer from 'puppeteer';
 import { PDFDocument } from 'pdf-lib';
 import { fileURLToPath } from 'url';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const BATCH_SIZE = 8; // Number of folders to process concurrently
+
+// Helper function to get font paths
+const getFontPath = (appPath, fontName) => {
+  const fontPath = path.join(appPath, 'fonts', fontName);
+  if (fs.existsSync(fontPath)) {
+    return fontPath;
+  }
+  // Try resources path as fallback
+  const resourcePath = path.join(process.resourcesPath || appPath, 'fonts', fontName);
+  if (fs.existsSync(resourcePath)) {
+    return resourcePath;
+  }
+  throw new Error(`Font not found: ${fontName}`);
+};
 
 function getValidItems(inputDir) {
   if (!fs.lstatSync(inputDir).isDirectory()) {

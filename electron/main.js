@@ -1,19 +1,16 @@
 import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron'
 import { fileURLToPath } from 'url'
 import path from 'path'
-import { dirname } from 'path'
 import fs from 'fs'
 
 const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
+const __dirname = path.dirname(__filename)
 
 // Get the app path based on whether we're in development or production
 const getAppPath = () => {
   if (app.isPackaged) {
-    // In production, use the resources path
-    return path.join(process.resourcesPath)
+    return process.resourcesPath
   } else {
-    // In development, use the project root
     return path.join(__dirname, '..')
   }
 }
@@ -32,13 +29,18 @@ const createWindow = () => {
 
   mainWindow.loadFile(path.join(__dirname, 'index.html'))
   
-  // Uncomment to open DevTools in development
+  // Open DevTools in development
   if (!app.isPackaged) {
     mainWindow.webContents.openDevTools()
   }
 }
 
 app.whenReady().then(() => {
+  // Set up the resources path for the app
+  if (app.isPackaged) {
+    process.resourcesPath = path.join(app.getAppPath(), '..', 'Resources')
+  }
+  
   createWindow()
 
   app.on('activate', () => {
@@ -70,7 +72,7 @@ ipcMain.on('process-files', async (event) => {
     }
 
     try {
-      // Import the processing module dynamically
+      // Import and run the processing script
       const indexPath = app.isPackaged 
         ? path.join(process.resourcesPath, 'index.js')
         : path.join(__dirname, '..', 'index.js')

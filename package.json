@@ -28,7 +28,7 @@
   },
   "build": {
     "appId": "com.pdfexporter.app",
-    "asar": true,
+    "asar": false,
     "asarUnpack": [
       "node_modules/puppeteer/.local-chromium/**/*"
     ],
@@ -48,7 +48,8 @@
       "index.js",
       "config/**/*",
       "package.json",
-      "node_modules/**/*"
+      "node_modules/**/*",
+      "fonts/**/*"
     ],
     "directories": {
       "output": "dist",
@@ -56,14 +57,16 @@
     },
     "extraResources": [
       {
+        "from": "fonts",
+        "to": "fonts"
+      },
+      {
         "from": ".",
         "to": ".",
         "filter": [
           "scripts/**/*",
           "index.js",
-          "config/**/*",
-          "fonts/**/*",
-          "node_modules/**/*"
+          "config/**/*"
         ]
       }
     ]

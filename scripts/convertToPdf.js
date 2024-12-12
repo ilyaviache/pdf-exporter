@@ -2,19 +2,24 @@ import puppeteer from 'puppeteer';
 import { PDFDocument } from 'pdf-lib';
 import fs from 'fs';
 import { findJournalTranslation } from './journalNames.js';
+import { loadFont } from './utils.js';
 
-const fontStyles = `
+const fontFaces = `
   @font-face {
     font-family: 'Newton-BoldItalic';
-    src: url('data:font/opentype;base64,${fs.readFileSync('./fonts/NEWTON-BOLDITALIC.OTF').toString('base64')}') format('opentype');
+    src: url('data:font/opentype;base64,${loadFont('NEWTON-BOLDITALIC.OTF')}') format('opentype');
   }
   @font-face {
     font-family: 'Newton-Regular';
-    src: url('data:font/opentype;base64,${fs.readFileSync('./fonts/NEWTON-REGULAR.OTF').toString('base64')}') format('opentype');
+    src: url('data:font/opentype;base64,${loadFont('NEWTON-REGULAR.OTF')}') format('opentype');
   }
   @font-face {
     font-family: 'Newton-Bold';
-    src: url('data:font/opentype;base64,${fs.readFileSync('./fonts/NEWTON-BOLD.OTF').toString('base64')}') format('opentype');
+    src: url('data:font/opentype;base64,${loadFont('NEWTON-BOLD.OTF')}') format('opentype');
+  }
+  @font-face {
+    font-family: 'NewtonC';
+    src: url('data:font/opentype;base64,${loadFont('NEWTONC.OTF')}') format('opentype');
   }
   * {
     -webkit-font-smoothing: antialiased;
@@ -57,7 +62,7 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
     format: 'A4',
     displayHeaderFooter: true,
     headerTemplate: `
-      <style>${fontStyles}</style>
+      <style>${fontFaces}</style>
       <div style="
         width: 100%;
         padding: 0px 0px 10px;
@@ -76,7 +81,7 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
       </div>
     `,
     footerTemplate: `
-    <style>${fontStyles}</style>
+    <style>${fontFaces}</style>
       <div style="
         width: 100%;
         padding: 10px 0px 0px;
@@ -120,7 +125,7 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
     format: 'A4',
     displayHeaderFooter: true,
     headerTemplate: `
-    <style>${fontStyles}</style>
+    <style>${fontFaces}</style>
       <div style="
         width: 100%;
         padding: 0px 0px 10px;
@@ -147,7 +152,7 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
       </div>
     `,
     footerTemplate: `
-    <style>${fontStyles}</style>
+    <style>${fontFaces}</style>
       <div style="
         width: 100%;
         padding: 10px 0px 0px;

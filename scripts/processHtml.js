@@ -1,6 +1,7 @@
 import fs from 'fs';
 import * as cheerio from 'cheerio';
 import path from 'path';
+import { loadFont } from './utils.js';
 
 function extractSurnames(html) {
   const $ = cheerio.load(html);
@@ -90,42 +91,22 @@ async function processHtml(inputPath, outputPath, imageFolderPath, browser) {
   let totalHeight = 404;
 
   // Add fonts to head section
-  const fontStyles = `
-    @font-face {
-      font-family: 'NewtonC-Bold';
-      src: url('data:font/opentype;base64,${fs.readFileSync('./fonts/NEWTONC-BOLD.OTF', 'base64')}') format('opentype');
-    }
-    @font-face {
-      font-family: 'NewtonC-BoldItalic';
-      src: url('data:font/opentype;base64,${fs.readFileSync('./fonts/NEWTONC-BOLDITALIC.OTF', 'base64')}') format('opentype');
-    }
-    @font-face {
-      font-family: 'NewtonC-Italic';
-      src: url('data:font/opentype;base64,${fs.readFileSync('./fonts/NEWTONC-ITALIC.OTF', 'base64')}') format('opentype');
-    }
-    @font-face {
-      font-family: 'NewtonC';
-      src: url('data:font/opentype;base64,${fs.readFileSync('./fonts/NEWTONC.OTF', 'base64')}') format('opentype');
-    }
-    @font-face {
-      font-family: 'Newton-Bold';
-      src: url('data:font/opentype;base64,${fs.readFileSync('./fonts/NEWTON-BOLD.OTF', 'base64')}') format('opentype');
-    }
+  const fontFaces = `
     @font-face {
       font-family: 'Newton-BoldItalic';
-      src: url('data:font/opentype;base64,${fs.readFileSync('./fonts/NEWTON-BOLDITALIC.OTF', 'base64')}') format('opentype');
-    }
-    @font-face {
-      font-family: 'Newton-ExtraBold';
-      src: url('data:font/opentype;base64,${fs.readFileSync('./fonts/NEWTON-EXTRABOLD.OTF', 'base64')}') format('opentype');
-    }
-    @font-face {
-      font-family: 'Newton-Italic';
-      src: url('data:font/opentype;base64,${fs.readFileSync('./fonts/NEWTON-ITALIC.OTF', 'base64')}') format('opentype');
+      src: url('data:font/opentype;base64,${loadFont('NEWTON-BOLDITALIC.OTF')}') format('opentype');
     }
     @font-face {
       font-family: 'Newton-Regular';
-      src: url('data:font/opentype;base64,${fs.readFileSync('./fonts/NEWTON-REGULAR.OTF', 'base64')}') format('opentype');
+      src: url('data:font/opentype;base64,${loadFont('NEWTON-REGULAR.OTF')}') format('opentype');
+    }
+    @font-face {
+      font-family: 'Newton-Bold';
+      src: url('data:font/opentype;base64,${loadFont('NEWTON-BOLD.OTF')}') format('opentype');
+    }
+    @font-face {
+      font-family: 'NewtonC';
+      src: url('data:font/opentype;base64,${loadFont('NEWTONC.OTF')}') format('opentype');
     }
   `;
 
@@ -149,7 +130,7 @@ async function processHtml(inputPath, outputPath, imageFolderPath, browser) {
   // `;
 
   const customStyles = `
-    ${fontStyles}
+    ${fontFaces}
     
     /* General text content alignment and margin */
     #preview-content > * {
