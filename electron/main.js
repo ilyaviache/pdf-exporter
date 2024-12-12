@@ -33,7 +33,9 @@ const createWindow = () => {
   mainWindow.loadFile(path.join(__dirname, 'index.html'))
   
   // Uncomment to open DevTools in development
-  // if (!app.isPackaged) {
+  if (!app.isPackaged) {
+    mainWindow.webContents.openDevTools()
+  }
 }
 
 app.whenReady().then(() => {
@@ -67,8 +69,15 @@ ipcMain.on('process-files', async (event) => {
       fs.mkdirSync(outputDir, { recursive: true })
     }
 
-    // Process the files using the imported function
     try {
+      // Import the processing module dynamically
+      const indexPath = app.isPackaged 
+        ? path.join(process.resourcesPath, 'index.js')
+        : path.join(__dirname, '..', 'index.js')
+
+      console.log('Loading processing module from:', indexPath)
+      const { processFiles } = await import(`file://${indexPath}`)
+      
       await processFiles(appPath)
       event.reply('process-complete', { success: true })
     } catch (error) {

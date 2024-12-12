@@ -44,7 +44,8 @@
       "scripts/**/*",
       "index.js",
       "config/**/*",
-      "package.json"
+      "package.json",
+      "node_modules/**/*"
     ],
     "directories": {
       "output": "dist",
@@ -58,7 +59,8 @@
           "scripts/**/*",
           "index.js",
           "config/**/*",
-          "fonts/**/*"
+          "fonts/**/*",
+          "node_modules/**/*"
         ]
       }
     ]
