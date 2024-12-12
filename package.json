@@ -18,6 +18,7 @@
     "dotenv": "^16.4.5",
     "fs": "0.0.1-security",
     "p-map": "^7.0.0",
+    "parse5-htmlparser2-tree-adapter": "^7.1.0",
     "path": "^0.12.7",
     "pdf-lib": "^1.17.1",
     "puppeteer": "^23.8.0",
@@ -29,28 +30,40 @@
   },
   "build": {
     "appId": "com.pdfexporter.app",
-    "asar": false,
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/puppeteer/.local-chromium/**/*"
+    ],
     "files": [
-      "**/*"
+      "electron/**/*",
+      "scripts/**/*",
+      "index.js",
+      "config/**/*",
+      "package.json",
+      "node_modules/**/*"
     ],
     "extraResources": [
       {
-        "from": "node_modules/puppeteer/.local-chromium",
-        "to": "app/node_modules/puppeteer/.local-chromium",
+        "from": ".",
+        "to": ".",
         "filter": [
-          "**/*"
+          "index.js",
+          "scripts/**/*"
         ]
+      },
+      {
+        "from": "fonts",
+        "to": "fonts"
       }
     ],
     "mac": {
-      "target": [
-        "dir"
-      ],
+      "target": ["dir"],
       "identity": null
     },
     "directories": {
       "output": "dist",
       "buildResources": "build"
-    }
+    },
+    "npmRebuild": true
   }
 }

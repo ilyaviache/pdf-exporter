@@ -15,10 +15,10 @@ const getAppPath = () => {
   }
 }
 
-// Get the resources path for Puppeteer
+// Get the resources path for the app
 const getResourcesPath = () => {
   if (app.isPackaged) {
-    return path.join(process.resourcesPath, 'app')
+    return process.resourcesPath
   }
   return path.join(__dirname, '..')
 }
@@ -59,23 +59,6 @@ const createWindow = () => {
 }
 
 app.whenReady().then(() => {
-  // Set up environment variables for Puppeteer
-  if (app.isPackaged) {
-    process.env.PUPPETEER_EXECUTABLE_PATH = path.join(
-      getResourcesPath(),
-      'node_modules',
-      'puppeteer',
-      '.local-chromium',
-      // You might need to adjust this path based on your Puppeteer version and platform
-      'mac-arm64',
-      'chrome-mac-arm64',
-      'Chromium.app',
-      'Contents',
-      'MacOS',
-      'Chromium'
-    )
-  }
-
   createWindow()
 
   app.on('activate', () => {
@@ -113,9 +96,22 @@ ipcMain.on('process-files', async (event) => {
         : path.join(__dirname, '..', 'index.js')
 
       console.log('Loading processing module from:', indexPath)
-      console.log('Puppeteer executable path:', process.env.PUPPETEER_EXECUTABLE_PATH)
       
-      const { processFiles } = await import(`file://${indexPath}`)
+      // Verify that the file exists
+      if (!fs.existsSync(indexPath)) {
+        console.error('index.js not found at:', indexPath)
+        event.reply('process-complete', { 
+          success: false, 
+          error: `index.js not found at: ${indexPath}`
+        })
+        return
+      }
+      
+      // Use file:// protocol for ESM imports
+      const fileUrl = `file://${indexPath}`
+      console.log('Loading module from URL:', fileUrl)
+      
+      const { processFiles } = await import(fileUrl)
       await processFiles(appPath)
       event.reply('process-complete', { success: true })
     } catch (error) {
