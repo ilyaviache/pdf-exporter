@@ -1,173 +1,82 @@
-Here's a documentation for running the app:
+# PDF Exporter
 
-# HTML to PDF Converter App Documentation
+A desktop application for converting HTML files to PDF documents.
 
-## Overview
+## For Developers: Building the Application
 
-This Node.js application converts HTML files to PDF format, processing multiple folders concurrently. It handles custom fonts, styling, and maintains folder structure from input to output.
-
-## Prerequisites
+### Prerequisites
 
 - Node.js (v14 or higher)
-- npm (Node Package Manager)
+- npm or pnpm
 
-## Installation
+### Build Instructions
 
-1. Clone the repository:
-
-```bash
-git clone <repository-url>
-cd <project-directory>
-```
-
-2. Install dependencies:
-
+1. Install dependencies:
 ```bash
 npm install
+# or if using pnpm
+pnpm install
 ```
 
-## Project Structure
-
-```
-.
-├── fonts/                  # Custom font files (.OTF)
-├── input-html/            # Place HTML files here
-│   └── journal-name-1/    # Parent folder (journal name)
-│       └── article-1/     # Article folder containing HTML and images
-├── output/                # Generated PDFs will be here
-├── scripts/              
-├── config/               
-└── index.js              # Main application file
-```
-
-## Input Directory Structure
-
-The application expects HTML files to be organized in the following structure:
-
-```
-input-html/
-├── journal-name-1-something/
-│   ├── article1/
-│   │   ├── article.html
-│   │   └── images/
-│   └── article2/
-│       ├── article.html
-│       └── images/
-└── journal-name-2-something/
-    └── ...
-```
-
-## Usage
-
-1. Place your HTML files in the `input-html` directory following the structure above
-
-2. Run the application:
-
+2. Build the application:
 ```bash
-npm start
+npm run electron:build
+# or if using pnpm
+pnpm electron:build
 ```
 
-The application will:
+The built application will be available in the `dist` folder:
+- For macOS: `dist/mac`
+- For Windows: `dist/win-unpacked`
 
-- Clear the output directory
-- Process all HTML files in parallel (8 folders at a time)
-- Generate PDFs in the `output` directory maintaining the same folder structure
-- Console log the progress and any errors
+## For Users: Using the Application
 
-## Code Reference
+### Installation
 
-The main processing logic can be found in:
+#### macOS
+1. Download the `.dmg` file from the releases
+2. Double-click the `.dmg` file
+3. Drag the application to your Applications folder
 
-```125:193:index.js
-async function main() {
-  const inputDir = path.join(path.resolve(), 'input-html');
-  const outputDir = path.join(path.resolve(), 'output');
-  const browser = await puppeteer.launch();
+#### Windows
+1. Download the installer from the releases
+2. Run the installer
+3. Follow the installation wizard
 
-  try {
-    clearOutputFolder(outputDir);
+### Using the Application
 
-    // Get all parent folders
-    const parentFolders = fs.readdirSync(inputDir)
-      .filter(folder => {
-        const fullPath = path.join(inputDir, folder);
-        return !folder.startsWith('.') && fs.lstatSync(fullPath).isDirectory();
-      });
+The application provides a simple three-step process:
 
-    // Process each parent folder sequentially
-    for (const parentFolder of parentFolders) {
-      // Extract journal name (text before first "-")
-      const journalName = parentFolder.split('-')[0].trim();
-      console.log(`Processing parent folder: ${parentFolder}`);
-      console.log(`Journal name: ${journalName}`);
+1. **Input Files**
+   - Click the "Open Input Folder" button
+   - Place your HTML files in the opened folder
+   - The application accepts `.html` files
 
-      const parentPath = path.join(inputDir, parentFolder);
-      const parentOutputPath = path.join(outputDir, parentFolder);
+2. **Process Files**
+   - After placing your HTML files in the input folder
+   - Click the "Start Processing" button
+   - Wait for the processing to complete
+   - A success or error message will appear
 
-      // Get subfolders within parent folder
-      const subFolders = fs.readdirSync(parentPath)
-        .filter(folder => {
-          const fullPath = path.join(parentPath, folder);
-          return !folder.startsWith('.') && fs.lstatSync(fullPath).isDirectory();
-        });
-      if (subFolders.length === 0) {
-        console.log(`No subfolders found in ${parentFolder}`);
-        continue;
-      }
+3. **Get Results**
+   - Click the "Open Output Folder" button
+   - Your processed PDF files will be in this folder
+   - PDFs will have the same names as the input HTML files
 
-      // Create parent output directory if it doesn't exist
-      if (!fs.existsSync(parentOutputPath)) {
-        fs.mkdirSync(parentOutputPath, { recursive: true });
-      }
+### Troubleshooting
 
-      // Process subfolders concurrently within each parent folder
-      await pMap(
-        subFolders,
-        async subFolder => {
-          const inputPath = path.join(parentPath, subFolder);
-          const outputPath = path.join(parentOutputPath, subFolder);
-          // console.log(`Processing subfolder: ${inputPath}`);
-          try {
-            // Pass the journal name instead of full parent folder name
-            await processSingleFolder(inputPath, outputPath, browser, journalName);
-          } catch (error) {
-            console.error(`Error processing subfolder ${subFolder} in ${parentFolder}:`, error);
-          }
-        },
-        { concurrency: BATCH_SIZE }
-      );
+If you encounter any issues:
 
-      console.log(`Completed processing parent folder: ${parentFolder}`);
-    }
+1. Make sure your HTML files are properly formatted
+2. Check that you have write permissions in the application folders
+3. Ensure your input files are placed in the correct folder
 
-    console.log('All processing complete!');
-  } catch (error) {
-    console.error('Error during processing:', error);
-  } finally {
-    await browser.close();
-  }
-}
-```
+### Notes
 
-## Output
+- The application automatically creates input and output folders if they don't exist
+- Processing time depends on the number and size of input files
+- The application maintains the original file names (with .pdf extension)
 
-The converted PDFs will be generated in the `output` directory, maintaining the same folder structure as the input:
+## Support
 
-```
-output/
-├── journal-name-1-something/
-│   ├── article1/
-│   │   └── article.pdf
-│   └── article2/
-│       └── article.pdf
-└── journal-name-2-something/
-    └── ...
-```
-
-## Notes
-
-- The application processes 8 folders concurrently by default (can be modified in `BATCH_SIZE` constant)
-- Folders starting with `.` are ignored
-- Only `.html` files are processed
-- Images should be in an `images` folder within each article directory
-- The journal name is extracted from the parent folder name (text before the first "-")
+For support or bug reports, please create an issue in the GitHub repository.

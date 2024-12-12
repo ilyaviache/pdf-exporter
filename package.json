@@ -1,11 +1,13 @@
 {
-  "name": "src",
+  "name": "pdf-exporter",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "PDF Export Application",
+  "main": "electron/main.js",
   "type": "module",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "electron:start": "electron .",
+    "electron:build": "electron-builder"
   },
   "keywords": [],
   "author": "",
@@ -15,9 +17,28 @@
     "cheerio": "^1.0.0",
     "dotenv": "^16.4.5",
     "fs": "0.0.1-security",
-    "p-map": "^7.0.2",
+    "p-map": "^7.0.0",
     "path": "^0.12.7",
     "pdf-lib": "^1.17.1",
     "puppeteer": "^23.8.0"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.pdfexporter.app",
+    "mac": {
+      "category": "public.app-category.utilities"
+    },
+    "files": [
+      "electron/**/*",
+      "scripts/**/*",
+      "index.js",
+      "input-html",
+      "output",
+      "config",
+      "fonts"
+    ]
   }
 }
