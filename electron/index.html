@@ -45,6 +45,10 @@
         button:hover {
             background-color: #45a049;
         }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
         #status {
             margin-top: 20px;
             padding: 10px;
@@ -58,6 +62,10 @@
             background-color: #f2dede;
             color: #a94442;
         }
+        .processing {
+            background-color: #d9edf7;
+            color: #31708f;
+        }
     </style>
 </head>
 <body>
@@ -67,19 +75,19 @@
         <div class="step">
             <h2>Step 1: Input Files</h2>
             <p>Place your HTML files in the input folder:</p>
-            <button onclick="openInputFolder()">Open Input Folder</button>
+            <button onclick="openInputFolder()" id="inputButton">Open Input Folder</button>
         </div>
 
         <div class="step">
             <h2>Step 2: Process Files</h2>
             <p>Click the button below to start processing your files:</p>
-            <button onclick="processFiles()">Start Processing</button>
+            <button onclick="processFiles()" id="processButton">Start Processing</button>
         </div>
 
         <div class="step">
             <h2>Step 3: Get Results</h2>
             <p>Access your processed files in the output folder:</p>
-            <button onclick="openOutputFolder()">Open Output Folder</button>
+            <button onclick="openOutputFolder()" id="outputButton">Open Output Folder</button>
         </div>
 
         <div id="status"></div>
@@ -87,6 +95,18 @@
 
     <script>
         const { ipcRenderer } = require('electron');
+
+        function setStatus(message, type) {
+            const status = document.getElementById('status');
+            status.innerHTML = message;
+            status.className = type;
+        }
+
+        function disableButtons(disable) {
+            document.getElementById('inputButton').disabled = disable;
+            document.getElementById('processButton').disabled = disable;
+            document.getElementById('outputButton').disabled = disable;
+        }
 
         function openInputFolder() {
             ipcRenderer.send('open-input-folder');
@@ -97,19 +117,22 @@
         }
 
         function processFiles() {
-            document.getElementById('status').innerHTML = 'Processing files...';
-            document.getElementById('status').className = '';
+            setStatus('Processing files... Please wait.', 'processing');
+            disableButtons(true);
             ipcRenderer.send('process-files');
         }
 
         ipcRenderer.on('process-complete', (event, result) => {
+            disableButtons(false);
             if (result.success) {
-                document.getElementById('status').innerHTML = 'Processing completed successfully!';
-                document.getElementById('status').className = 'success';
+                setStatus('Processing completed successfully!', 'success');
             } else {
-                document.getElementById('status').innerHTML = `Error: ${result.error}`;
-                document.getElementById('status').className = 'error';
+                setStatus(`Error: ${result.error}`, 'error');
             }
+        });
+
+        ipcRenderer.on('folder-error', (event, result) => {
+            setStatus(`Error: ${result.error}`, 'error');
         });
     </script>
 </body>
