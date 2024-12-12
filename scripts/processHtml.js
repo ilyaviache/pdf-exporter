@@ -242,10 +242,30 @@ async function processHtml(inputPath, outputPath, imageFolderPath, browser) {
       font-family: 'Newton-Bold' !important;
     }
 
-    #preview h1, #preview h2, #preview h3, #preview h4, #preview h5, #preview strong {
-      font-family: 'Newton-Bold' !important;
-      font-size: 17px !important;
-    }
+#preview h1 {
+ font-family: 'Newton-Bold' !important;
+ font-size: 20px !important;
+}
+
+#preview h2 {
+ font-family: 'Newton-Bold' !important;
+ font-size: 17px !important;
+}
+
+#preview h3 {
+ font-family: 'Newton-Bold' !important;
+ font-size: 16px !important;
+}
+
+#preview h4, #preview h5 {
+ font-family: 'Newton-Bold' !important;
+ font-size: 15px !important;
+}
+
+#preview strong {
+ font-family: 'Newton-Bold' !important;
+ font-size: 18px !important;
+}
     .main-title {
       position: relative !important;
     }
@@ -400,18 +420,18 @@ async function processHtml(inputPath, outputPath, imageFolderPath, browser) {
   });
 
   // Add figure reference processing
-  $('#preview-content').find('*').contents().each(function() {
-    if (this.nodeType === 3) { // Text nodes only
-      const text = $(this).text();
-      const newText = text.replace(
-        /(Fig\.|Figure)\s*(\d+)(?:\s*\([a-z]\))?/gi,
-        '<span class="bold">$&</span>'
-      );
-      if (text !== newText) {
-        $(this).replaceWith(newText);
-      }
-    }
-  });
+  //$('#preview-content').find('*').contents().each(function() {
+  //  if (this.nodeType === 3) { // Text nodes only
+  //    const text = $(this).text();
+  //    const newText = text.replace(
+  //      /(Fig\.|Figure)\s*(\d+)(?:\s*\([a-z]\))?/gi,
+  //      '<span class="bold">$&</span>'
+  //    );
+  //    if (text !== newText) {
+  //      $(this).replaceWith(newText);
+  //    }
+  //  }
+  //});
 
   fs.writeFileSync(outputPath, $.html(), 'utf8');
   // console.log(`HTML processed and saved to ${outputPath}`);
