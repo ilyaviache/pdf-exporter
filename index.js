@@ -27,6 +27,7 @@ const getFontPath = (appPath, fontName) => {
 };
 
 function getValidItems(inputDir) {
+  console.log('Checking for valid items in:', inputDir);
   if (!fs.lstatSync(inputDir).isDirectory()) {
     console.warn(`Skipping ${inputDir} as it's not a directory`);
     return [];
@@ -34,17 +35,23 @@ function getValidItems(inputDir) {
 
   const items = [];
   const files = fs.readdirSync(inputDir);
+  console.log('Found files:', files);
 
   for (const item of files) {
     // Skip hidden files and special directories
     if (item.startsWith('.') || 
         item === 'images' || 
-        item === 'init_images') continue;
+        item === 'init_images') {
+        console.log('Skipping special file/directory:', item);
+        continue;
+    }
     
     const fullPath = path.join(inputDir, item);
+    console.log('Checking file:', item, 'at path:', fullPath);
     
     // Only include HTML files that start with 'image_modified'
     if ((item.startsWith('image_modified') || item.startsWith('modified')) && item.endsWith('.html')) {
+      console.log('Found valid HTML file:', item);
       items.push({
         name: item,
         path: fullPath,
@@ -53,11 +60,13 @@ function getValidItems(inputDir) {
     }
   }
 
+  console.log('Valid items found:', items);
   return items;
 }
 
 // Helper function to clear the output folder
 function clearOutputFolder(folderPath) {
+  console.log('Clearing output folder:', folderPath);
   if (fs.existsSync(folderPath)) {
     fs.readdirSync(folderPath).forEach(file => {
       const filePath = path.join(folderPath, file);
@@ -72,7 +81,12 @@ function clearOutputFolder(folderPath) {
 }
 
 async function processSingleFolder(inputDir, outputFilePath, browser, { journalName, journalDate }) {
+  console.log('Processing folder:', inputDir);
+  console.log('Output file path:', outputFilePath);
+  
   const items = getValidItems(inputDir);
+  console.log('Found items to process:', items);
+  
   let pdfMetadata = null;
 
   // Process HTML files
@@ -88,16 +102,22 @@ async function processSingleFolder(inputDir, outputFilePath, browser, { journalN
       }
       
       const processedHtmlPath = path.join(tempDir, `${baseName}.html`);
+      console.log('Processing HTML:', item.path);
+      console.log('Temp processed path:', processedHtmlPath);
 
       try {
+        const imagesPath = path.join(inputDir, 'images');
+        console.log('Looking for images in:', imagesPath);
+        
         const meta = await processHtml(
           item.path, 
           processedHtmlPath, 
-          path.join(inputDir, 'images'), 
+          imagesPath, 
           browser,
           pdfMetadata
         );
 
+        console.log('HTML processing complete, converting to PDF');
         await convertToPdf(
           processedHtmlPath, 
           outputFilePath, 
@@ -123,8 +143,14 @@ async function processSingleFolder(inputDir, outputFilePath, browser, { journalN
 
 // Main processing function that will be exported
 export async function processFiles(appPath) {
+  console.log('Starting file processing with app path:', appPath);
+  
   const inputDir = path.join(appPath, 'input-html');
   const outputDir = path.join(appPath, 'output');
+  
+  console.log('Input directory:', inputDir);
+  console.log('Output directory:', outputDir);
+
   const browser = await puppeteer.launch({
     headless: 'new',
     args: ['--no-sandbox', '--disable-setuid-sandbox']
@@ -134,11 +160,17 @@ export async function processFiles(appPath) {
     clearOutputFolder(outputDir);
 
     // Get all parent folders (journals)
-    const parentFolders = fs.readdirSync(inputDir)
-      .filter(folder => {
-        const fullPath = path.join(inputDir, folder);
-        return !folder.startsWith('.') && fs.lstatSync(fullPath).isDirectory();
-      });
+    const allItems = fs.readdirSync(inputDir);
+    console.log('All items in input directory:', allItems);
+    
+    const parentFolders = allItems.filter(folder => {
+      const fullPath = path.join(inputDir, folder);
+      const isDir = fs.lstatSync(fullPath).isDirectory();
+      console.log('Checking folder:', folder, 'Is directory:', isDir);
+      return !folder.startsWith('.') && isDir;
+    });
+
+    console.log('Found parent folders:', parentFolders);
 
     // Process each journal folder sequentially
     for (const parentFolder of parentFolders) {
@@ -153,17 +185,26 @@ export async function processFiles(appPath) {
       const parentPath = path.join(inputDir, parentFolder);
       const parentOutputPath = path.join(outputDir, parentFolder);
 
+      console.log('Parent input path:', parentPath);
+      console.log('Parent output path:', parentOutputPath);
+
       // Create journal output directory if it doesn't exist
       if (!fs.existsSync(parentOutputPath)) {
         fs.mkdirSync(parentOutputPath, { recursive: true });
       }
 
       // Get article folders
-      const articleFolders = fs.readdirSync(parentPath)
-        .filter(folder => {
-          const fullPath = path.join(parentPath, folder);
-          return !folder.startsWith('.') && fs.lstatSync(fullPath).isDirectory();
-        });
+      const allArticleItems = fs.readdirSync(parentPath);
+      console.log('All items in parent folder:', allArticleItems);
+      
+      const articleFolders = allArticleItems.filter(folder => {
+        const fullPath = path.join(parentPath, folder);
+        const isDir = fs.lstatSync(fullPath).isDirectory();
+        console.log('Checking article folder:', folder, 'Is directory:', isDir);
+        return !folder.startsWith('.') && isDir;
+      });
+
+      console.log('Found article folders:', articleFolders);
 
       if (articleFolders.length === 0) {
         console.log(`No article folders found in ${parentFolder}`);
@@ -177,6 +218,10 @@ export async function processFiles(appPath) {
           const cleanArticleName = articleFolder.replace('.pdf', '');
           const inputPath = path.join(parentPath, articleFolder);
           const outputFilePath = path.join(parentOutputPath, `${cleanArticleName}.pdf`);
+          
+          console.log('Processing article:', articleFolder);
+          console.log('Input path:', inputPath);
+          console.log('Output file path:', outputFilePath);
           
           try {
             await processSingleFolder(inputPath, outputFilePath, browser, {

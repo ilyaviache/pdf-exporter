@@ -95,9 +95,7 @@
         <div id="status"></div>
     </div>
 
-    <script>
-        const { ipcRenderer } = require('electron');
-
+    <script type="module">
         function setStatus(message, type) {
             const status = document.getElementById('status');
             status.innerHTML = message;
@@ -110,21 +108,21 @@
             document.getElementById('outputButton').disabled = disable;
         }
 
-        function openInputFolder() {
-            ipcRenderer.send('open-input-folder');
+        window.openInputFolder = () => {
+            window.electron.send('open-input-folder');
         }
 
-        function openOutputFolder() {
-            ipcRenderer.send('open-output-folder');
+        window.openOutputFolder = () => {
+            window.electron.send('open-output-folder');
         }
 
-        function processFiles() {
+        window.processFiles = () => {
             setStatus('Processing files... Please wait.', 'processing');
             disableButtons(true);
-            ipcRenderer.send('process-files');
+            window.electron.send('process-files');
         }
 
-        ipcRenderer.on('process-complete', (event, result) => {
+        window.electron.receive('process-complete', (result) => {
             disableButtons(false);
             if (result.success) {
                 setStatus('Processing completed successfully!', 'success');
@@ -133,7 +131,7 @@
             }
         });
 
-        ipcRenderer.on('folder-error', (event, result) => {
+        window.electron.receive('folder-error', (result) => {
             setStatus(`Error: ${result.error}`, 'error');
         });
     </script>
