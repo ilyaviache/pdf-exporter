@@ -8,7 +8,9 @@
     "start": "node index.js",
     "electron:start": "electron .",
     "electron:build": "electron-builder --mac --arm64",
-    "electron:build-win": "electron-builder --win --config electron-builder.config.cjs"
+    "clean": "rimraf dist",
+    "prebuild": "npm run clean && node scripts/build-index.cjs",
+    "electron:build-win": "npm run prebuild && electron-builder --win --config electron-builder.config.cjs"
   },
   "keywords": [],
   "author": "",
@@ -27,7 +29,8 @@
   },
   "devDependencies": {
     "electron": "^28.0.0",
-    "electron-builder": "^24.9.1"
+    "electron-builder": "^24.9.1",
+    "rimraf": "^6.0.1"
   },
   "build": {
     "appId": "com.pdfexporter.app",
@@ -58,14 +61,18 @@
       }
     ],
     "mac": {
-      "target": ["dir"],
+      "target": [
+        "dir"
+      ],
       "identity": null
     },
     "win": {
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ]
     },

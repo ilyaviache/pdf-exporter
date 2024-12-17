@@ -93,21 +93,23 @@ ipcMain.on('process-files', async (event) => {
     }
 
     try {
-      // Import and run the processing script
-      let indexPath;
+      let processFiles;
       if (app.isPackaged) {
-        // In production, use require for the processing module
-        const { processFiles } = require('../index.js');
-        await processFiles(appPath);
+        // In production, use the CommonJS version
+        const indexPath = path.join(process.resourcesPath, 'index.cjs');
+        console.log('Loading CommonJS module from:', indexPath);
+        const processor = await import(`file://${indexPath.replace(/\\/g, '/')}`);
+        processFiles = processor.processFiles;
       } else {
-        // In development, use ES modules
-        indexPath = path.join(__dirname, '..', 'index.js');
-        const fileUrl = new URL(`file://${indexPath.replace(/\\/g, '/')}`);
-        const { processFiles } = await import(fileUrl.href);
-        await processFiles(appPath);
+        // In development, use the ES module version
+        const indexPath = path.join(__dirname, '..', 'index.js');
+        console.log('Loading ES module from:', indexPath);
+        const { processFiles: devProcessFiles } = await import(`file://${indexPath.replace(/\\/g, '/')}`);
+        processFiles = devProcessFiles;
       }
-      
-      event.reply('process-complete', { success: true })
+
+      await processFiles(appPath);
+      event.reply('process-complete', { success: true });
     } catch (error) {
       console.error('Error processing files:', error)
       event.reply('process-complete', { 
