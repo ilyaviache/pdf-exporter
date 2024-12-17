@@ -56,7 +56,7 @@ async function convertToPdf(htmlPath, outputPath, browser) {
 }
 
 // Main processing function that will be exported
-export async function processFiles(appPath) {
+async function processFiles(appPath) {
   console.log('Starting file processing...');
   console.log('App path:', appPath);
   
@@ -102,6 +102,12 @@ export async function processFiles(appPath) {
   } finally {
     await browser.close();
   }
+}
+
+// Export for both ES modules and CommonJS
+export { processFiles };
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { processFiles };
 }
 
 // For backwards compatibility when running directly

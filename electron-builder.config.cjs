@@ -1,12 +1,6 @@
 module.exports = {
   "appId": "com.pdfexporter.app",
-  "asar": true,
-  "asarUnpack": [
-    "node_modules/puppeteer/.local-chromium/**/*",
-    "scripts/**/*",
-    "index.js",
-    "electron/index.html"
-  ],
+  "asar": false,
   "files": [
     "electron/**/*",
     "scripts/**/*",
@@ -36,8 +30,5 @@ module.exports = {
     "output": "dist",
     "buildResources": "build"
   },
-  "npmRebuild": true,
-  "asar": {
-    "smartUnpack": true
-  }
+  "npmRebuild": true
 } 
