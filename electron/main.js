@@ -23,6 +23,31 @@ const getResourcesPath = () => {
   return path.join(__dirname, '..')
 }
 
+// Get the correct path for ES modules in production
+const getModulePath = (filename) => {
+  if (app.isPackaged) {
+    // Try multiple possible locations
+    const possiblePaths = [
+      path.join(process.resourcesPath, 'app.asar.unpacked', filename),
+      path.join(process.resourcesPath, filename),
+      path.join(app.getAppPath(), '..', 'app.asar.unpacked', filename),
+      path.join(app.getAppPath(), filename)
+    ];
+
+    console.log('Searching for module in paths:', possiblePaths);
+
+    for (const possiblePath of possiblePaths) {
+      console.log('Checking path:', possiblePath);
+      if (fs.existsSync(possiblePath)) {
+        console.log('Found module at:', possiblePath);
+        return possiblePath;
+      }
+    }
+    throw new Error(`Could not find module: ${filename}. Searched in: ${possiblePaths.join(', ')}`);
+  }
+  return path.join(__dirname, '..', filename);
+}
+
 let mainWindow
 
 const createWindow = () => {
@@ -39,15 +64,36 @@ const createWindow = () => {
   })
 
   // Load the index.html file
-  const indexPath = app.isPackaged
-    ? path.join(process.resourcesPath, 'electron', 'index.html')
-    : path.join(__dirname, 'index.html')
+  let indexPath;
+  if (app.isPackaged) {
+    // In production, look for index.html in the app.asar
+    indexPath = path.join(__dirname, 'index.html');
+    console.log('Production index.html path:', indexPath);
+    
+    // If not found in app.asar, try app.asar.unpacked
+    if (!fs.existsSync(indexPath)) {
+      const unpackedPath = path.join(app.getAppPath(), '..', 'app.asar.unpacked', 'electron', 'index.html');
+      if (fs.existsSync(unpackedPath)) {
+        indexPath = unpackedPath;
+        console.log('Found index.html in unpacked:', indexPath);
+      }
+    }
+  } else {
+    indexPath = path.join(__dirname, 'index.html');
+  }
   
   console.log('Loading index.html from:', indexPath)
   console.log('App path:', app.getAppPath())
   console.log('Resources path:', getResourcesPath())
   console.log('Is packaged:', app.isPackaged)
+  console.log('Current directory:', __dirname)
   
+  if (!fs.existsSync(indexPath)) {
+    console.error('index.html not found at:', indexPath);
+    app.quit();
+    return;
+  }
+
   mainWindow.loadFile(indexPath)
   mainWindow.webContents.openDevTools() // Always open DevTools for debugging
 
@@ -95,32 +141,12 @@ ipcMain.on('process-files', async (event) => {
     }
 
     try {
-      // Import and run the processing script
-      const indexPath = app.isPackaged 
-        ? path.join(process.resourcesPath, 'index.js')
-        : path.join(__dirname, '..', 'index.js')
-
+      // Get the correct path for index.js
+      const indexPath = getModulePath('index.js')
       console.log('Loading processing module from:', indexPath)
       
-      // Verify that the file exists
-      if (!fs.existsSync(indexPath)) {
-        console.error('index.js not found at:', indexPath)
-        event.reply('process-complete', { 
-          success: false, 
-          error: `index.js not found at: ${indexPath}`
-        })
-        return
-      }
-
-      // In production, use the unpacked version of the file
-      const finalIndexPath = app.isPackaged
-        ? path.join(process.resourcesPath, 'app.asar.unpacked', 'index.js')
-        : indexPath;
-      
-      console.log('Final index path:', finalIndexPath)
-      
       // Convert path to URL format for ESM imports
-      const fileUrl = new URL(`file://${finalIndexPath.replace(/\\/g, '/')}`)
+      const fileUrl = new URL(`file://${indexPath.replace(/\\/g, '/')}`)
       console.log('Loading module from URL:', fileUrl.href)
       
       const { processFiles } = await import(fileUrl.href)

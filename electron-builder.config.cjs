@@ -4,7 +4,8 @@ module.exports = {
   "asarUnpack": [
     "node_modules/puppeteer/.local-chromium/**/*",
     "scripts/**/*",
-    "index.js"
+    "index.js",
+    "electron/index.html"
   ],
   "files": [
     "electron/**/*",
@@ -17,17 +18,10 @@ module.exports = {
   "extraResources": [
     {
       "from": ".",
-      "to": ".",
       "filter": [
         "index.js",
-        "scripts/**/*",
-        "electron/preload.js",
-        "electron/index.html"
+        "scripts/**/*"
       ]
-    },
-    {
-      "from": "fonts",
-      "to": "fonts"
     }
   ],
   "win": {
