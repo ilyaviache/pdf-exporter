@@ -19,6 +19,8 @@ function isChromiumInstalled() {
     '..',
     'dist',
     'chrome',
+    'win64-131.0.6778.108',
+    'chrome-win64',
     'chrome.exe'
   );
   console.log('Checking Chrome in dest:', destPath);
@@ -66,7 +68,9 @@ function ensureChrome() {
       __dirname,
       '..',
       'dist',
-      'chrome'
+      'chrome',
+      'win64-131.0.6778.108',
+      'chrome-win64'
     );
     console.log('Copying Chrome to:', destPath);
     

@@ -9,9 +9,13 @@ const __dirname = path.dirname(__filename)
 // Get the app path based on whether we're in development or production
 const getAppPath = () => {
   if (app.isPackaged) {
-    return path.join(app.getPath('userData'))
+    const userDataPath = app.getPath('userData');
+    console.log('User data path:', userDataPath);
+    return userDataPath;
   } else {
-    return path.join(__dirname, '..')
+    const devPath = path.join(__dirname, '..');
+    console.log('Development path:', devPath);
+    return devPath;
   }
 }
 
@@ -73,58 +77,46 @@ app.on('window-all-closed', () => {
 
 // Handle file processing
 ipcMain.on('process-files', async (event) => {
-  console.log('Received process-files event')
+  console.log('=== Starting process-files handler ===');
   try {
-    const appPath = getAppPath()
-    const inputDir = path.join(appPath, 'input-html')
-    const outputDir = path.join(appPath, 'output')
-
-    console.log('Input directory:', inputDir)
-    console.log('Output directory:', outputDir)
-
-    // Create directories if they don't exist
-    if (!fs.existsSync(inputDir)) {
-      console.log('Creating input directory')
-      fs.mkdirSync(inputDir, { recursive: true })
-    }
-    if (!fs.existsSync(outputDir)) {
-      console.log('Creating output directory')
-      fs.mkdirSync(outputDir, { recursive: true })
-    }
-
+    const appPath = getAppPath();
+    console.log('App path determined:', appPath);
+    
     try {
-      let processFiles;
-      if (app.isPackaged) {
-        // In production, use the CommonJS version
-        const indexPath = path.join(process.resourcesPath, 'index.cjs');
-        console.log('Loading CommonJS module from:', indexPath);
-        const processor = await import(`file://${indexPath.replace(/\\/g, '/')}`);
-        processFiles = processor.processFiles;
-      } else {
-        // In development, use the ES module version
-        const indexPath = path.join(__dirname, '..', 'index.js');
-        console.log('Loading ES module from:', indexPath);
-        const { processFiles: devProcessFiles } = await import(`file://${indexPath.replace(/\\/g, '/')}`);
-        processFiles = devProcessFiles;
-      }
-
-      await processFiles(appPath);
+      // Get the correct path for index.js
+      const indexPath = path.join(process.resourcesPath, 'index.cjs');
+      console.log('Loading processing module from:', indexPath);
+      
+      // Convert path to URL format for ESM imports
+      const fileUrl = new URL(`file://${indexPath.replace(/\\/g, '/')}`);
+      console.log('Loading module from URL:', fileUrl.href);
+      
+      const { processFiles } = await import(fileUrl.href);
+      console.log('Module loaded successfully');
+      
+      console.log('Starting file processing...');
+      // Call processFiles with the correct path
+      const result = await processFiles(appPath);
+      console.log('Processing completed with result:', result);
+      
       event.reply('process-complete', { success: true });
     } catch (error) {
-      console.error('Error processing files:', error)
+      console.error('Error during file processing:', error);
+      console.error('Stack trace:', error.stack);
       event.reply('process-complete', { 
         success: false, 
-        error: `Error processing files: ${error.message}`
-      })
+        error: `Error processing files: ${error.message}\nStack trace: ${error.stack}`
+      });
     }
   } catch (error) {
-    console.error('Caught error:', error)
+    console.error('Fatal error in process-files handler:', error);
+    console.error('Stack trace:', error.stack);
     event.reply('process-complete', { 
       success: false, 
-      error: `General error: ${error.message}`
-    })
+      error: `General error: ${error.message}\nStack trace: ${error.stack}`
+    });
   }
-})
+});
 
 // Handle input folder selection
 ipcMain.on('open-input-folder', async (event) => {

@@ -24,10 +24,18 @@ module.exports = {
       ]
     },
     {
-      "from": "node_modules/puppeteer/.local-chromium/win64-131.0.6778.108/chrome-win64",
+      "from": "dist/chrome",
       "to": "chrome",
       "filter": [
         "**/*"
+      ]
+    },
+    {
+      "from": "fonts",
+      "to": "fonts",
+      "filter": [
+        "*.OTF",
+        "*.TTF"
       ]
     }
   ],

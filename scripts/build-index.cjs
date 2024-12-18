@@ -7,169 +7,373 @@ if (!fs.existsSync(distDir)) {
     fs.mkdirSync(distDir, { recursive: true });
 }
 
-// Read the original ES module
-const esModuleContent = fs.readFileSync(path.join(__dirname, '..', 'index.js'), 'utf8');
-
-// Convert ES module to CommonJS
-const commonJSContent = `
-const path = require('path');
-const fs = require('fs');
-const { app } = require('electron');
-
-// Helper function to get Chrome executable path
-function getChromePath() {
-  if (app.isPackaged) {
-    // In production, Chrome is in the resources/chrome directory
-    const chromePath = path.join(
-      process.resourcesPath,
-      'chrome',
-      'chrome.exe'
-    );
-    console.log('Looking for Chrome at:', chromePath);
-    if (!fs.existsSync(chromePath)) {
-      // Try alternate path
-      const altPath = path.join(
-        app.getAppPath(),
-        '..',
-        'chrome',
-        'chrome.exe'
-      );
-      console.log('Alternate Chrome path:', altPath);
-      if (fs.existsSync(altPath)) {
-        return altPath;
-      }
-      throw new Error(\`Chrome not found at: \${chromePath} or \${altPath}\`);
-    }
-    return chromePath;
-  }
-  return undefined; // Let puppeteer find Chrome in development
-}
-
-// Helper function to get the correct path for node_modules
-function getNodeModulesPath() {
-  if (app.isPackaged) {
-    return path.join(process.resourcesPath, 'app.asar');
-  }
-  return path.join(__dirname, '..');
-}
-
-// Configure puppeteer with our bundled Chrome
-process.env.PUPPETEER_EXECUTABLE_PATH = getChromePath();
-
-// Dynamically require puppeteer from the correct location
-const puppeteer = require(path.join(getNodeModulesPath(), 'node_modules', 'puppeteer'));
-
-function getValidItems(inputDir) {
-  if (!fs.lstatSync(inputDir).isDirectory()) {
-    console.warn(\`Skipping \${inputDir} as it's not a directory\`);
-    return [];
-  }
-
-  const items = [];
-  const files = fs.readdirSync(inputDir);
-
-  for (const item of files) {
-    if (item.endsWith('.html')) {
-      items.push({
-        name: item,
-        path: path.join(inputDir, item)
-      });
-    }
-  }
-
-  return items;
-}
-
-async function convertToPdf(htmlPath, outputPath, browser) {
-  const page = await browser.newPage();
-  try {
-    // Read the HTML content
-    const htmlContent = fs.readFileSync(htmlPath, 'utf8');
-    
-    // Set the content
-    await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
-    
-    // Generate PDF
-    await page.pdf({
-      path: outputPath,
-      format: 'A4',
-      printBackground: true,
-      margin: {
-        top: '20mm',
-        right: '20mm',
-        bottom: '20mm',
-        left: '20mm'
-      }
-    });
-    
-    console.log(\`Generated PDF: \${outputPath}\`);
-  } finally {
-    await page.close();
-  }
-}
-
-// Main processing function that will be exported
-async function processFiles(appPath) {
-  console.log('Starting file processing...');
-  console.log('App path:', appPath);
-  
-  const inputDir = path.join(appPath, 'input-html');
-  const outputDir = path.join(appPath, 'output');
-  
-  console.log('Input directory:', inputDir);
-  console.log('Output directory:', outputDir);
-
-  // Ensure output directory exists
-  if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true });
-  }
-
-  const chromePath = getChromePath();
-  console.log('Chrome path:', chromePath);
-
-  const browser = await puppeteer.launch({
-    headless: 'new',
-    executablePath: chromePath,
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-gpu'
-    ]
-  });
-
-  try {
-    // Get all HTML files
-    const items = getValidItems(inputDir);
-    console.log('Found HTML files:', items.map(item => item.name));
-
-    // Process each HTML file
-    for (const item of items) {
-      const outputPath = path.join(outputDir, item.name.replace('.html', '.pdf'));
-      console.log(\`Converting \${item.name} to PDF...\`);
-      
-      try {
-        await convertToPdf(item.path, outputPath, browser);
-        console.log(\`Successfully converted \${item.name} to PDF\`);
-      } catch (error) {
-        console.error(\`Error converting \${item.name}:\`, error);
-      }
-    }
-
-    console.log('All processing complete!');
-    return true;
-  } catch (error) {
-    console.error('Error during processing:', error);
-    throw error;
-  } finally {
-    await browser.close();
-  }
-}
-
-module.exports = { processFiles };
-`;
-
-// Write the CommonJS version
+// Write the CommonJS version directly instead of using template literals
 const outputPath = path.join(distDir, 'index.cjs');
-fs.writeFileSync(outputPath, commonJSContent);
+
+const commonJSContent = [
+    "const path = require('path');",
+    "const fs = require('fs');",
+    "const { app } = require('electron');",
+    "",
+    "function getChromePath() {",
+    "  if (app.isPackaged) {",
+    "    const chromePath = path.join(",
+    "      process.resourcesPath,",
+    "      'chrome',",
+    "      'win64-131.0.6778.108',",
+    "      'chrome-win64',",
+    "      'chrome.exe'",
+    "    );",
+    "    console.log('Looking for Chrome at:', chromePath);",
+    "    if (!fs.existsSync(chromePath)) {",
+    "      const altPath = path.join(",
+    "        app.getAppPath(),",
+    "        '..',",
+    "        'chrome',",
+    "        'win64-131.0.6778.108',",
+    "        'chrome-win64',",
+    "        'chrome.exe'",
+    "      );",
+    "      console.log('Alternate Chrome path:', altPath);",
+    "      if (fs.existsSync(altPath)) {",
+    "        return altPath;",
+    "      }",
+    "      throw new Error('Chrome not found at: ' + chromePath + ' or ' + altPath);",
+    "    }",
+    "    return chromePath;",
+    "  }",
+    "  return undefined;",
+    "}",
+    "",
+    "function getNodeModulesPath() {",
+    "  if (app.isPackaged) {",
+    "    return path.join(process.resourcesPath, 'app.asar');",
+    "  }",
+    "  return path.join(__dirname, '..');",
+    "}",
+    "",
+    "process.env.PUPPETEER_EXECUTABLE_PATH = getChromePath();",
+    "",
+    "const puppeteer = require(path.join(getNodeModulesPath(), 'node_modules', 'puppeteer'));",
+    "",
+    "function getValidItems(inputDir) {",
+    "  const items = [];",
+    "",
+    "  function scanDirectory(dir) {",
+    "    if (!fs.existsSync(dir)) {",
+    "      console.warn('Directory does not exist: ' + dir);",
+    "      return;",
+    "    }",
+    "",
+    "    if (!fs.lstatSync(dir).isDirectory()) {",
+    "      console.warn('Skipping ' + dir + ' as it is not a directory');",
+    "      return;",
+    "    }",
+    "",
+    "    const files = fs.readdirSync(dir);",
+    "",
+    "    for (const item of files) {",
+    "      const fullPath = path.join(dir, item);",
+    "      const stat = fs.lstatSync(fullPath);",
+    "",
+    "      if (stat.isDirectory()) {",
+    "        scanDirectory(fullPath);",
+    "      } else if (item.endsWith('.html')) {",
+    "        const relativePath = path.relative(inputDir, fullPath);",
+    "        items.push({",
+    "          name: relativePath,",
+    "          path: fullPath",
+    "        });",
+    "      }",
+    "    }",
+    "  }",
+    "",
+    "  scanDirectory(inputDir);",
+    "  console.log('Found HTML files:', items.map(function(item) { return item.name; }));",
+    "  return items;",
+    "}",
+    "",
+    "function loadFont(fontFileName) {",
+    "  const fontPath = path.join(process.resourcesPath, 'fonts', fontFileName);",
+    "  try {",
+    "    return fs.readFileSync(fontPath, 'base64');",
+    "  } catch (error) {",
+    "    console.error('Error loading font:', fontFileName, error);",
+    "    return '';",
+    "  }",
+    "}",
+    "",
+    "async function convertToPdf(htmlPath, outputPath, browser) {",
+    "  const outputDir = path.dirname(outputPath);",
+    "  if (!fs.existsSync(outputDir)) {",
+    "    fs.mkdirSync(outputDir, { recursive: true });",
+    "  }",
+    "",
+    "  const page = await browser.newPage();",
+    "  try {",
+    "    console.log('Processing HTML file: ' + htmlPath);",
+    "    console.log('Output PDF path: ' + outputPath);",
+    "",
+    "    let htmlContent = fs.readFileSync(htmlPath, 'utf8');",
+    "    console.log('Read HTML content, length: ' + htmlContent.length);",
+    "",
+    "    const fontFaces = `",
+    "      @font-face {",
+    "        font-family: 'Newton-BoldItalic';",
+    "        src: url('data:font/opentype;base64,${loadFont('NEWTON-BOLDITALIC.OTF')}') format('opentype');",
+    "      }",
+    "      @font-face {",
+    "        font-family: 'Newton-Regular';",
+    "        src: url('data:font/opentype;base64,${loadFont('NEWTON-REGULAR.OTF')}') format('opentype');",
+    "      }",
+    "      @font-face {",
+    "        font-family: 'Newton-Bold';",
+    "        src: url('data:font/opentype;base64,${loadFont('NEWTON-BOLD.OTF')}') format('opentype');",
+    "      }",
+    "      @font-face {",
+    "        font-family: 'NewtonC';",
+    "        src: url('data:font/opentype;base64,${loadFont('NEWTONC.OTF')}') format('opentype');",
+    "      }",
+    "    `;",
+    "",
+    "    const customStyles = `",
+    "      <style>",
+    "        ${fontFaces}",
+    "",
+    "        /* General text content alignment and margin */",
+    "        #preview-content > * {",
+    "          text-align: left !important;",
+    "          margin-left: 115px !important;",
+    "          text-align: justify !important;",
+    "        }",
+    "",
+    "        body {",
+    "          font-family: NewtonC;",
+    "        }",
+    "",
+    "        /* Reset margin and center alignment for images */",
+    "        #preview-content img,",
+    "        #preview-content figure,",
+    "        #preview-content .figure_img {",
+    "          margin-left: 0 !important;",
+    "          text-align: center !important;",
+    "          margin: 0 auto !important;",
+    "        }",
+    "",
+    "        /* Keep tables centered without left margin */",
+    "        #preview-content table {",
+    "          margin-left: 0 !important;",
+    "          margin: 0 auto !important;",
+    "        }",
+    "",
+    "        /* Keep author section centered */",
+    "        #preview-content .author,",
+    "        #preview-content .main-title {",
+    "          text-align: center !important;",
+    "          margin-left: 0 !important;",
+    "        }",
+    "",
+    "        /* Keep abstract justified */",
+    "        #preview-content .abstract {",
+    "          text-align: justify !important;",
+    "          width: 84% !important;",
+    "          margin-top: -5px !important;",
+    "        }",
+    "",
+    "        #setText .main-title, #setText .author, #preview-content .main-title, #preview-content .author {",
+    "          text-align: left !important;",
+    "          padding-left: 85px;",
+    "        }",
+    "",
+    "        #preview-content .author, #preview-content .main-title {",
+    "          justify-content: flex-start !important;",
+    "          text-align: left !important;",
+    "        }",
+    "",
+    "        #preview-content .main-title {",
+    "          padding-left: 114px;",
+    "          padding-top: 0px;",
+    "          font-size: 24px;",
+    "          font-family: Newton-Bold;",
+    "        }",
+    "",
+    "        #preview-content .author {",
+    "          padding-left: 1px;",
+    "        }",
+    "",
+    "        #preview-content .author > p > span, #setText .author > p > span {",
+    "          text-align: left !important;",
+    "          font-size: 12px;",
+    "          font-family: Newton-Regular;",
+    "          margin-bottom: 5px;",
+    "        }",
+    "",
+    "        #preview-content .author p, #setText .author p {",
+    "          padding: 0px !important;",
+    "        }",
+    "",
+    "        #preview-content div.author span:first-child cdiv {",
+    "          font-size: 16px;",
+    "          font-family: Newton-Bold;",
+    "        }",
+    "",
+    "        #preview-content .author > p > span:first-child {",
+    "          margin-bottom: 12px;",
+    "          margin-top: 2px;",
+    "        }",
+    "",
+    "        .abstract_span, .bold {",
+    "          font-family: 'Newton-Bold' !important;",
+    "        }",
+    "",
+    "        #preview h1 {",
+    "          font-family: 'Newton-Bold' !important;",
+    "          font-size: 20px !important;",
+    "        }",
+    "",
+    "        #preview h2 {",
+    "          font-family: 'Newton-Bold' !important;",
+    "          font-size: 17px !important;",
+    "        }",
+    "",
+    "        #preview h3 {",
+    "          font-family: 'Newton-Bold' !important;",
+    "          font-size: 16px !important;",
+    "        }",
+    "",
+    "        #preview h4, #preview h5 {",
+    "          font-family: 'Newton-Bold' !important;",
+    "          font-size: 15px !important;",
+    "        }",
+    "",
+    "        #preview strong {",
+    "          font-family: 'Newton-Bold' !important;",
+    "          font-size: 18px !important;",
+    "        }",
+    "      </style>",
+    "    `;",
+    "",
+    "    htmlContent = htmlContent.replace('</head>', `${customStyles}</head>`);",
+    "",
+    "    await page.setContent(htmlContent, {",
+    "      waitUntil: ['load', 'domcontentloaded', 'networkidle0'],",
+    "      timeout: 30000",
+    "    });",
+    "",
+    "    await page.evaluate(() => document.fonts.ready);",
+    "",
+    "    await page.pdf({",
+    "      path: outputPath,",
+    "      format: 'A4',",
+    "      printBackground: true,",
+    "      margin: {",
+    "        top: '20mm',",
+    "        right: '20mm',",
+    "        bottom: '20mm',",
+    "        left: '20mm'",
+    "      },",
+    "      displayHeaderFooter: false,",
+    "      preferCSSPageSize: true",
+    "    });",
+    "",
+    "    if (fs.existsSync(outputPath)) {",
+    "      const stats = fs.statSync(outputPath);",
+    "      console.log('Generated PDF: ' + outputPath + ' (' + stats.size + ' bytes)');",
+    "    } else {",
+    "      throw new Error('Failed to create PDF at ' + outputPath);",
+    "    }",
+    "  } catch (error) {",
+    "    console.error('Error converting ' + htmlPath + ' to PDF:', error);",
+    "    throw error;",
+    "  } finally {",
+    "    await page.close();",
+    "  }",
+    "}",
+    "",
+    "async function processFiles(appPath) {",
+    "  console.log('=== Starting file processing ===');",
+    "  console.log('App path:', appPath);",
+    "",
+    "  try {",
+    "    const basePath = app.isPackaged ",
+    "      ? path.join(app.getPath('userData'))",
+    "      : appPath;",
+    "",
+    "    console.log('Base path:', basePath);",
+    "    console.log('Is packaged:', app.isPackaged);",
+    "",
+    "    const inputDir = path.join(basePath, 'input-html');",
+    "    const outputDir = path.join(basePath, 'output');",
+    "",
+    "    console.log('Input directory:', inputDir);",
+    "    console.log('Output directory:', outputDir);",
+    "",
+    "    if (!fs.existsSync(inputDir)) {",
+    "      console.log('Creating input directory');",
+    "      fs.mkdirSync(inputDir, { recursive: true });",
+    "    }",
+    "",
+    "    if (!fs.existsSync(outputDir)) {",
+    "      console.log('Creating output directory');",
+    "      fs.mkdirSync(outputDir, { recursive: true });",
+    "    }",
+    "",
+    "    console.log('Getting Chrome path...');",
+    "    const chromePath = getChromePath();",
+    "    console.log('Chrome path:', chromePath);",
+    "",
+    "    console.log('Launching browser...');",
+    "    const browser = await puppeteer.launch({",
+    "      headless: 'new',",
+    "      executablePath: chromePath,",
+    "      args: [",
+    "        '--no-sandbox',",
+    "        '--disable-setuid-sandbox',",
+    "        '--disable-dev-shm-usage',",
+    "        '--disable-gpu'",
+    "      ]",
+    "    });",
+    "",
+    "    try {",
+    "      const items = getValidItems(inputDir);",
+    "      console.log('Total files found:', items.length);",
+    "",
+    "      if (items.length === 0) {",
+    "        console.log('No HTML files found in input directory');",
+    "        return true;",
+    "      }",
+    "",
+    "      for (const item of items) {",
+    "        const outputPath = path.join(",
+    "          outputDir,",
+    "          path.dirname(item.name),",
+    "          path.basename(item.name, '.html') + '.pdf'",
+    "        );",
+    "",
+    "        try {",
+    "          const outputSubDir = path.dirname(outputPath);",
+    "          if (!fs.existsSync(outputSubDir)) {",
+    "            fs.mkdirSync(outputSubDir, { recursive: true });",
+    "          }",
+    "",
+    "          await convertToPdf(item.path, outputPath, browser);",
+    "        } catch (error) {",
+    "          console.error('Error processing ' + item.name + ':', error);",
+    "        }",
+    "      }",
+    "",
+    "      return true;",
+    "    } finally {",
+    "      await browser.close();",
+    "    }",
+    "  } catch (error) {",
+    "    console.error('Error:', error);",
+    "    throw error;",
+    "  }",
+    "}",
+    "",
+    "module.exports = { processFiles };"
+].join('\n');
+
+fs.writeFileSync(outputPath, commonJSContent, 'utf8');
 console.log('Successfully created CommonJS version at:', outputPath); 
