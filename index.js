@@ -142,9 +142,22 @@ export async function processFiles(appPath) {
 
     // Process each journal folder sequentially
     for (const parentFolder of parentFolders) {
-      const parts = parentFolder.split('-');
-      const journalName = parts[0].trim();
-      const journalDate = parts.length >= 3 ? `${parts[1].trim()}-${parts[2].trim()}` : '';
+      // Fix journal name parsing
+      const folderParts = parentFolder.split('-');
+      let journalName = folderParts[0].trim();
+      let journalDate = '';
+      
+      // Handle date parts
+      if (folderParts.length >= 3) {
+        const month = folderParts[folderParts.length - 2].trim().padStart(2, '0');
+        const year = folderParts[folderParts.length - 1].trim();
+        journalDate = `${month}-${year}`;
+        
+        // If there are more parts before the date, they belong to the journal name
+        if (folderParts.length > 3) {
+          journalName = folderParts.slice(0, -2).join('-').trim();
+        }
+      }
 
       console.log(`Processing journal: ${parentFolder}`);
       console.log(`Journal name: ${journalName}`);
