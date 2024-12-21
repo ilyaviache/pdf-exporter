@@ -1,10 +1,30 @@
 import path from 'path';
 import fs from 'fs';
+import pMap from 'p-map';
+import processHtml from './scripts/processHtml.js';
+import convertToPdf from './scripts/convertToPdf.js';
 import puppeteer from 'puppeteer';
+import { PDFDocument } from 'pdf-lib';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const BATCH_SIZE = 8; // Number of folders to process concurrently
+
+// Helper function to get font paths
+const getFontPath = (appPath, fontName) => {
+  const fontPath = path.join(appPath, 'fonts', fontName);
+  if (fs.existsSync(fontPath)) {
+    return fontPath;
+  }
+  // Try resources path as fallback
+  const resourcePath = path.join(process.resourcesPath || appPath, 'fonts', fontName);
+  if (fs.existsSync(resourcePath)) {
+    return resourcePath;
+  }
+  throw new Error(`Font not found: ${fontName}`);
+};
 
 function getValidItems(inputDir) {
   if (!fs.lstatSync(inputDir).isDirectory()) {
@@ -16,10 +36,19 @@ function getValidItems(inputDir) {
   const files = fs.readdirSync(inputDir);
 
   for (const item of files) {
-    if (item.endsWith('.html')) {
+    // Skip hidden files and special directories
+    if (item.startsWith('.') || 
+        item === 'images' || 
+        item === 'init_images') continue;
+    
+    const fullPath = path.join(inputDir, item);
+    
+    // Only include HTML files that start with 'image_modified'
+    if ((item.startsWith('image_modified') || item.startsWith('modified')) && item.endsWith('.html')) {
       items.push({
         name: item,
-        path: path.join(inputDir, item)
+        path: fullPath,
+        type: 'html'
       });
     }
   }
@@ -27,71 +56,154 @@ function getValidItems(inputDir) {
   return items;
 }
 
-async function convertToPdf(htmlPath, outputPath, browser) {
-  const page = await browser.newPage();
-  try {
-    // Read the HTML content
-    const htmlContent = fs.readFileSync(htmlPath, 'utf8');
-    
-    // Set the content
-    await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
-    
-    // Generate PDF
-    await page.pdf({
-      path: outputPath,
-      format: 'A4',
-      printBackground: true,
-      margin: {
-        top: '20mm',
-        right: '20mm',
-        bottom: '20mm',
-        left: '20mm'
+// Helper function to clear the output folder
+function clearOutputFolder(folderPath) {
+  if (fs.existsSync(folderPath)) {
+    fs.readdirSync(folderPath).forEach(file => {
+      const filePath = path.join(folderPath, file);
+      if (fs.lstatSync(filePath).isDirectory()) {
+        clearOutputFolder(filePath);
+        fs.rmdirSync(filePath);
+      } else {
+        fs.unlinkSync(filePath);
       }
     });
-    
-    console.log(`Generated PDF: ${outputPath}`);
-  } finally {
-    await page.close();
+  }
+}
+
+async function processSingleFolder(inputDir, outputFilePath, browser, { journalName, journalDate }) {
+  const items = getValidItems(inputDir);
+  let pdfMetadata = null;
+
+  // Process HTML files
+  for (const item of items) {
+    if (item.type === 'html') {
+      const baseName = path.basename(item.name, '.html')
+        .replace('.pdf', '');
+      
+      // Create a temporary directory for intermediate files
+      const tempDir = path.join(path.dirname(outputFilePath), '.temp');
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
+      
+      const processedHtmlPath = path.join(tempDir, `${baseName}.html`);
+
+      try {
+        const meta = await processHtml(
+          item.path, 
+          processedHtmlPath, 
+          path.join(inputDir, 'images'), 
+          browser,
+          pdfMetadata
+        );
+
+        await convertToPdf(
+          processedHtmlPath, 
+          outputFilePath, 
+          browser, 
+          { 
+            ...meta, 
+            pdfMetadata, 
+            parentFolderName: journalName,
+            journalDate 
+          }
+        );
+
+        // Clean up temporary files
+        if (fs.existsSync(tempDir)) {
+          fs.rmSync(tempDir, { recursive: true, force: true });
+        }
+      } catch (error) {
+        console.error(`Error processing file ${item.name}:`, error);
+      }
+    }
   }
 }
 
 // Main processing function that will be exported
-async function processFiles(appPath) {
-  console.log('Starting file processing...');
-  console.log('App path:', appPath);
-  
+export async function processFiles(appPath) {
   const inputDir = path.join(appPath, 'input-html');
   const outputDir = path.join(appPath, 'output');
-  
-  console.log('Input directory:', inputDir);
-  console.log('Output directory:', outputDir);
-
-  // Ensure output directory exists
-  if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true });
-  }
-
   const browser = await puppeteer.launch({
     headless: 'new',
     args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
 
   try {
-    // Get all HTML files
-    const items = getValidItems(inputDir);
-    console.log('Found HTML files:', items.map(item => item.name));
+    clearOutputFolder(outputDir);
 
-    // Process each HTML file
-    for (const item of items) {
-      const outputPath = path.join(outputDir, item.name.replace('.html', '.pdf'));
-      console.log(`Converting ${item.name} to PDF...`);
+    // Get all parent folders (journals)
+    const parentFolders = fs.readdirSync(inputDir)
+      .filter(folder => {
+        const fullPath = path.join(inputDir, folder);
+        return !folder.startsWith('.') && fs.lstatSync(fullPath).isDirectory();
+      });
+
+    // Process each journal folder sequentially
+    for (const parentFolder of parentFolders) {
+      // Fix journal name parsing
+      const folderParts = parentFolder.split('-');
+      let journalName = folderParts[0].trim();
+      let journalDate = '';
       
-      try {
-        await convertToPdf(item.path, outputPath, browser);
-        console.log(`Successfully converted ${item.name} to PDF`);
-      } catch (error) {
-        console.error(`Error converting ${item.name}:`, error);
+      // Handle date parts
+      if (folderParts.length >= 3) {
+        const month = folderParts[folderParts.length - 2].trim().padStart(2, '0');
+        const year = folderParts[folderParts.length - 1].trim();
+        journalDate = `${month}-${year}`;
+        
+        // If there are more parts before the date, they belong to the journal name
+        if (folderParts.length > 3) {
+          journalName = folderParts.slice(0, -2).join('-').trim();
+        }
       }
+
+      console.log(`Processing journal: ${parentFolder}`);
+      console.log(`Journal name: ${journalName}`);
+      console.log(`Journal date: ${journalDate}`);
+
+      const parentPath = path.join(inputDir, parentFolder);
+      const parentOutputPath = path.join(outputDir, parentFolder);
+
+      // Create journal output directory if it doesn't exist
+      if (!fs.existsSync(parentOutputPath)) {
+        fs.mkdirSync(parentOutputPath, { recursive: true });
+      }
+
+      // Get article folders
+      const articleFolders = fs.readdirSync(parentPath)
+        .filter(folder => {
+          const fullPath = path.join(parentPath, folder);
+          return !folder.startsWith('.') && fs.lstatSync(fullPath).isDirectory();
+        });
+
+      if (articleFolders.length === 0) {
+        console.log(`No article folders found in ${parentFolder}`);
+        continue;
+      }
+
+      // Process articles concurrently
+      await pMap(
+        articleFolders,
+        async articleFolder => {
+          const cleanArticleName = articleFolder.replace('.pdf', '');
+          const inputPath = path.join(parentPath, articleFolder);
+          const outputFilePath = path.join(parentOutputPath, `${cleanArticleName}.pdf`);
+          
+          try {
+            await processSingleFolder(inputPath, outputFilePath, browser, {
+              journalName,
+              journalDate
+            });
+          } catch (error) {
+            console.error(`Error processing article ${articleFolder} in ${parentFolder}:`, error);
+          }
+        },
+        { concurrency: BATCH_SIZE }
+      );
+
+      console.log(`Completed processing journal: ${parentFolder}`);
     }
 
     console.log('All processing complete!');
@@ -102,12 +214,6 @@ async function processFiles(appPath) {
   } finally {
     await browser.close();
   }
-}
-
-// Export for both ES modules and CommonJS
-export { processFiles };
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { processFiles };
 }
 
 // For backwards compatibility when running directly

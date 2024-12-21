@@ -9,13 +9,9 @@ const __dirname = path.dirname(__filename)
 // Get the app path based on whether we're in development or production
 const getAppPath = () => {
   if (app.isPackaged) {
-    const userDataPath = app.getPath('userData');
-    console.log('User data path:', userDataPath);
-    return userDataPath;
+    return path.join(app.getPath('userData'))
   } else {
-    const devPath = path.join(__dirname, '..');
-    console.log('Development path:', devPath);
-    return devPath;
+    return path.join(__dirname, '..')
   }
 }
 
@@ -34,16 +30,17 @@ const createWindow = () => {
     width: 1024,
     height: 768,
     webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
-      webSecurity: true,
-      devTools: true,
-      preload: path.join(__dirname, 'preload.js')
+      nodeIntegration: true,
+      contextIsolation: false,
+      webSecurity: false,
+      devTools: true
     }
   })
 
   // Load the index.html file
-  const indexPath = path.join(__dirname, 'index.html')
+  const indexPath = app.isPackaged
+    ? path.join(__dirname, 'index.html')
+    : path.join(__dirname, 'index.html')
   
   console.log('Loading index.html from:', indexPath)
   console.log('App path:', app.getAppPath())
@@ -51,6 +48,8 @@ const createWindow = () => {
   console.log('Is packaged:', app.isPackaged)
   
   mainWindow.loadFile(indexPath)
+  
+  // Always open DevTools for debugging
   mainWindow.webContents.openDevTools()
 
   // Log any loading errors
@@ -77,105 +76,86 @@ app.on('window-all-closed', () => {
 
 // Handle file processing
 ipcMain.on('process-files', async (event) => {
-  console.log('=== Starting process-files handler ===');
-  try {
-    const appPath = getAppPath();
-    console.log('App path determined:', appPath);
-    
-    try {
-      // Get the correct path for index.js
-      const indexPath = path.join(process.resourcesPath, 'index.cjs');
-      console.log('Loading processing module from:', indexPath);
-      
-      // Convert path to URL format for ESM imports
-      const fileUrl = new URL(`file://${indexPath.replace(/\\/g, '/')}`);
-      console.log('Loading module from URL:', fileUrl.href);
-      
-      const { processFiles } = await import(fileUrl.href);
-      console.log('Module loaded successfully');
-      
-      console.log('Starting file processing...');
-      // Call processFiles with the correct path
-      const result = await processFiles(appPath);
-      console.log('Processing completed with result:', result);
-      
-      event.reply('process-complete', { success: true });
-    } catch (error) {
-      console.error('Error during file processing:', error);
-      console.error('Stack trace:', error.stack);
-      event.reply('process-complete', { 
-        success: false, 
-        error: `Error processing files: ${error.message}\nStack trace: ${error.stack}`
-      });
-    }
-  } catch (error) {
-    console.error('Fatal error in process-files handler:', error);
-    console.error('Stack trace:', error.stack);
-    event.reply('process-complete', { 
-      success: false, 
-      error: `General error: ${error.message}\nStack trace: ${error.stack}`
-    });
-  }
-});
-
-// Handle input folder selection
-ipcMain.on('open-input-folder', async (event) => {
-  console.log('Received open-input-folder event')
   try {
     const appPath = getAppPath()
     const inputDir = path.join(appPath, 'input-html')
-    console.log('Opening input directory:', inputDir)
-    
+    const outputDir = path.join(appPath, 'output')
+
+    // Create directories if they don't exist
     if (!fs.existsSync(inputDir)) {
-      console.log('Creating input directory')
       fs.mkdirSync(inputDir, { recursive: true })
     }
-    
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true })
+    }
+
     try {
-      await shell.openPath(inputDir)
-      console.log('Successfully opened input directory')
-    } catch (error) {
-      console.error('Error opening input directory:', error)
-      // Try opening with explorer on Windows
-      if (process.platform === 'win32') {
-        require('child_process').exec(`explorer "${inputDir}"`)
-      } else {
-        throw error
+      // Import and run the processing script
+      const indexPath = app.isPackaged 
+        ? path.join(getResourcesPath(), 'index.js')
+        : path.join(__dirname, '..', 'index.js')
+
+      console.log('Loading processing module from:', indexPath)
+      
+      // Verify that the file exists
+      if (!fs.existsSync(indexPath)) {
+        console.error('index.js not found at:', indexPath)
+        event.reply('process-complete', { 
+          success: false, 
+          error: `index.js not found at: ${indexPath}`
+        })
+        return
       }
+      
+      // Use file:// protocol for ESM imports
+      const fileUrl = `file://${indexPath}`
+      console.log('Loading module from URL:', fileUrl)
+      
+      const { processFiles } = await import(fileUrl)
+      await processFiles(appPath)
+      event.reply('process-complete', { success: true })
+    } catch (error) {
+      console.error('Error processing files:', error)
+      event.reply('process-complete', { 
+        success: false, 
+        error: `Error processing files: ${error.message}`
+      })
     }
   } catch (error) {
-    console.error('Error handling input folder:', error)
+    console.error('Caught error:', error)
+    event.reply('process-complete', { 
+      success: false, 
+      error: `General error: ${error.message}`
+    })
+  }
+})
+
+// Handle input folder selection
+ipcMain.on('open-input-folder', async (event) => {
+  try {
+    const appPath = getAppPath()
+    const inputDir = path.join(appPath, 'input-html')
+    if (!fs.existsSync(inputDir)) {
+      fs.mkdirSync(inputDir, { recursive: true })
+    }
+    await shell.openPath(inputDir)
+  } catch (error) {
+    console.error('Error opening input folder:', error)
     event.reply('folder-error', { error: error.message })
   }
 })
 
 // Handle output folder selection
 ipcMain.on('open-output-folder', async (event) => {
-  console.log('Received open-output-folder event')
   try {
     const appPath = getAppPath()
     const outputDir = path.join(appPath, 'output')
-    console.log('Opening output directory:', outputDir)
-    
     if (!fs.existsSync(outputDir)) {
-      console.log('Creating output directory')
       fs.mkdirSync(outputDir, { recursive: true })
     }
-    
-    try {
-      await shell.openPath(outputDir)
-      console.log('Successfully opened output directory')
-    } catch (error) {
-      console.error('Error opening output directory:', error)
-      // Try opening with explorer on Windows
-      if (process.platform === 'win32') {
-        require('child_process').exec(`explorer "${outputDir}"`)
-      } else {
-        throw error
-      }
-    }
+    await shell.openPath(outputDir)
   } catch (error) {
-    console.error('Error handling output folder:', error)
+    console.error('Error opening output folder:', error)
     event.reply('folder-error', { error: error.message })
   }
 }) 
