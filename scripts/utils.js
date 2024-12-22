@@ -22,12 +22,12 @@ export function getFontPath(fontName) {
     path.join(__dirname, '..', 'fonts', fontName)
   ].filter(Boolean); // Remove null paths
 
-  console.log('Searching for font in paths:', possiblePaths);
+  // console.log('Searching for font in paths:', possiblePaths);
 
   for (const fontPath of possiblePaths) {
-    console.log('Checking path:', fontPath);
+    // console.log('Checking path:', fontPath);
     if (fs.existsSync(fontPath)) {
-      console.log('Found font at:', fontPath);
+      // console.log('Found font at:', fontPath);
       return fontPath;
     }
   }
