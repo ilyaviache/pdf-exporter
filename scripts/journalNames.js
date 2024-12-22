@@ -1,6 +1,6 @@
 const journalTranslations = {
   'Автоматика и телемеханика': 'Automation and Remote Control',
-  'Азия и Африка сегодня': 'Asia and Africa Today',
+  'Азия и африка сегодня': 'Asia and Africa Today',
   'Акустический жунал': 'Acoustical Physics',
   'Астрономический вестник': 'Solar System Research',
   'Астрономический вестник. ИСС': 'Solar System Research',
@@ -87,6 +87,7 @@ const journalTranslations = {
   'Координационная химия': 'Russian Journal of Coordination Chemistry',
   'Космические исследования': 'Cosmic Research',
   'Кристаллография': 'Crystallography Reports',
+  'Латинская Америка': 'Latin America',
   'Лесоведение': 'Forest Science',
   'Литология и полезные ископаемые': 'Lithology and Mineral Resources',
   'Мембраны и мембранные технологии': 'Мембраны и мембранные технологии',
@@ -121,8 +122,10 @@ const journalTranslations = {
   'Расплавы': 'Расплавы',
   'Российская археология': 'Russian Archaeology',
   'Российская история': 'Russian History', 
+  'Социологические исследования': 'Sociological Studies', 
   'Стратиграфия': 'Stratigraphy and Geological Correlation',
   'Стратиграфия. Геологическая корреляция': 'Stratigraphy and Geological Correlation',
+  'США & Канада: экономика, политика, культура': 'USA & Canada: Economics, Politics, Culture',
   'Теоретические основы химической технологии': 'Theoretical Foundations of Chemical Engineering',
   'Теплофизика высоких температур': 'High Temperature',
   'Физика Земли': 'Izvestiya, Physics of the Solid Earth',
@@ -139,6 +142,7 @@ const journalTranslations = {
   'Человек': 'The Human Being',
   'Экология': 'Russian Journal of Ecology',
   'Электрохимия': 'Russian Journal of Electrochemistry',
+  'Этнографическое обозрение': 'Ethnographic Review',
   'Энтомологическое обозрение': 'Entomological Review',
   'Ядерная физика': 'Physics of Atomic Nuclei'
 }

@@ -6,6 +6,7 @@ import convertToPdf from './scripts/convertToPdf.js';
 import puppeteer from 'puppeteer';
 import { PDFDocument } from 'pdf-lib';
 import { fileURLToPath } from 'url';
+import { findJournalTranslation } from './scripts/journalNames.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -144,20 +145,37 @@ export async function processFiles(appPath) {
     for (const parentFolder of parentFolders) {
       // Fix journal name parsing
       const folderParts = parentFolder.split('-');
-      let journalName = folderParts[0].trim();
+      let journalName = '';
       let journalDate = '';
       
-      // Handle date parts
-      if (folderParts.length >= 3) {
-        const month = folderParts[folderParts.length - 2].trim().padStart(2, '0');
-        const year = folderParts[folderParts.length - 1].trim();
-        journalDate = `${month}-${year}`;
+      // Find the date parts by looking for MM-YY pattern
+      for (let i = 0; i < folderParts.length - 1; i++) {
+        const currentPart = folderParts[i];
+        const nextPart = folderParts[i + 1];
         
-        // If there are more parts before the date, they belong to the journal name
-        if (folderParts.length > 3) {
-          journalName = folderParts.slice(0, -2).join('-').trim();
+        // Check if we have a valid date pattern (MM-YY)
+        if (currentPart.length === 2 && !isNaN(currentPart) && 
+            nextPart.length >= 2 && !isNaN(nextPart.substring(0, 2))) {
+            
+            // These are date parts
+            const month = currentPart.trim().padStart(2, '0');
+            const year = nextPart.substring(0, 2).trim();
+            journalDate = `${month}-${year}`;
+            
+            // Journal name is everything before the date parts
+            journalName = folderParts.slice(0, i).join('-').trim();
+            break;
         }
       }
+      
+      // If no valid date pattern found, treat the whole thing as journal name
+      if (!journalDate) {
+        journalName = folderParts[0];
+      }
+
+      journalName = journalName.trim();
+      
+      // Look up the English translation if available
 
       console.log(`Processing journal: ${parentFolder}`);
       console.log(`Journal name: ${journalName}`);
