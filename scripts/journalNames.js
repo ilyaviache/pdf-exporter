@@ -1,7 +1,7 @@
 const journalTranslations = {
   'Автоматика и телемеханика': 'Automation and Remote Control',
   'Азия и африка сегодня': 'Asia and Africa Today',
-  'Акустический жунал': 'Acoustical Physics',
+  'Акустический журнал': 'Acoustical Physics',
   'Астрономический вестник': 'Solar System Research',
   'Астрономический вестник. ИСС': 'Solar System Research',
   'Астрономический вестник. Исследования солнечной системы': 'Solar System Research',

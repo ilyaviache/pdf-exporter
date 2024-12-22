@@ -122,6 +122,40 @@ async function processSingleFolder(inputDir, outputFilePath, browser, { journalN
   }
 }
 
+// Helper function to recursively find article folders
+async function findArticleFolders(folderPath, maxDepth = 2) {
+  if (maxDepth < 0) return [];
+  
+  const items = fs.readdirSync(folderPath)
+    .filter(item => !item.startsWith('.') && 
+                    item !== 'images' && 
+                    item !== 'init_images');
+  
+  const articleFolders = [];
+  
+  for (const item of items) {
+    const fullPath = path.join(folderPath, item);
+    if (!fs.lstatSync(fullPath).isDirectory()) continue;
+    
+    // Check if this folder contains HTML files
+    const hasHtmlFiles = getValidItems(fullPath).length > 0;
+    
+    if (hasHtmlFiles) {
+      // This is an article folder
+      articleFolders.push({
+        path: fullPath,
+        name: item
+      });
+    } else {
+      // Recursively check subfolders
+      const subFolders = await findArticleFolders(fullPath, maxDepth - 1);
+      articleFolders.push(...subFolders);
+    }
+  }
+  
+  return articleFolders;
+}
+
 // Main processing function that will be exported
 export async function processFiles(appPath) {
   const inputDir = path.join(appPath, 'input-html');
@@ -174,8 +208,6 @@ export async function processFiles(appPath) {
       }
 
       journalName = journalName.trim();
-      
-      // Look up the English translation if available
 
       console.log(`Processing journal: ${parentFolder}`);
       console.log(`Journal name: ${journalName}`);
@@ -189,12 +221,8 @@ export async function processFiles(appPath) {
         fs.mkdirSync(parentOutputPath, { recursive: true });
       }
 
-      // Get article folders
-      const articleFolders = fs.readdirSync(parentPath)
-        .filter(folder => {
-          const fullPath = path.join(parentPath, folder);
-          return !folder.startsWith('.') && fs.lstatSync(fullPath).isDirectory();
-        });
+      // Find all article folders recursively
+      const articleFolders = await findArticleFolders(parentPath);
 
       if (articleFolders.length === 0) {
         console.log(`No article folders found in ${parentFolder}`);
@@ -205,17 +233,16 @@ export async function processFiles(appPath) {
       await pMap(
         articleFolders,
         async articleFolder => {
-          const cleanArticleName = articleFolder.replace('.pdf', '');
-          const inputPath = path.join(parentPath, articleFolder);
+          const cleanArticleName = path.basename(articleFolder.path).replace('.pdf', '');
           const outputFilePath = path.join(parentOutputPath, `${cleanArticleName}.pdf`);
           
           try {
-            await processSingleFolder(inputPath, outputFilePath, browser, {
+            await processSingleFolder(articleFolder.path, outputFilePath, browser, {
               journalName,
               journalDate
             });
           } catch (error) {
-            console.error(`Error processing article ${articleFolder} in ${parentFolder}:`, error);
+            console.error(`Error processing article ${articleFolder.name} in ${parentFolder}:`, error);
           }
         },
         { concurrency: BATCH_SIZE }
