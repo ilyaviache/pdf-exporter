@@ -123,7 +123,7 @@ async function processSingleFolder(inputDir, outputFilePath, browser, { journalN
 }
 
 // Helper function to recursively find article folders
-async function findArticleFolders(folderPath, maxDepth = 2) {
+async function findArticleFolders(folderPath, maxDepth = 5) {
   if (maxDepth < 0) return [];
   
   const items = fs.readdirSync(folderPath)
@@ -142,9 +142,12 @@ async function findArticleFolders(folderPath, maxDepth = 2) {
     
     if (hasHtmlFiles) {
       // This is an article folder
+      // Get the relative path from input directory to this folder
+      const relativePath = path.relative(path.join(appPath, 'input-html'), fullPath);
       articleFolders.push({
         path: fullPath,
-        name: item
+        name: item,
+        relativePath: relativePath
       });
     } else {
       // Recursively check subfolders
@@ -214,12 +217,6 @@ export async function processFiles(appPath) {
       console.log(`Journal date: ${journalDate}`);
 
       const parentPath = path.join(inputDir, parentFolder);
-      const parentOutputPath = path.join(outputDir, parentFolder);
-
-      // Create journal output directory if it doesn't exist
-      if (!fs.existsSync(parentOutputPath)) {
-        fs.mkdirSync(parentOutputPath, { recursive: true });
-      }
 
       // Find all article folders recursively
       const articleFolders = await findArticleFolders(parentPath);
@@ -233,8 +230,17 @@ export async function processFiles(appPath) {
       await pMap(
         articleFolders,
         async articleFolder => {
+          // Get the parent directory path (author folder)
+          const parentDirPath = path.dirname(articleFolder.relativePath);
+          
+          // Create the output directory structure
+          const outputFolderPath = path.join(outputDir, parentDirPath);
+          if (!fs.existsSync(outputFolderPath)) {
+            fs.mkdirSync(outputFolderPath, { recursive: true });
+          }
+
           const cleanArticleName = path.basename(articleFolder.path).replace('.pdf', '');
-          const outputFilePath = path.join(parentOutputPath, `${cleanArticleName}.pdf`);
+          const outputFilePath = path.join(outputFolderPath, `${cleanArticleName}.pdf`);
           
           try {
             await processSingleFolder(articleFolder.path, outputFilePath, browser, {
