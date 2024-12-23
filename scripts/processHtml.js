@@ -334,7 +334,7 @@ async function processHtml(inputPath, outputPath, imageFolderPath, browser) {
   if (doiNumber) {
     const modifiedDoi = doiNumber.slice(0, -4) + 'e' + doiNumber.slice(-3);
     doi = modifiedDoi; // Save for later use
-    console.log('Found and modified DOI:', doi); // Add debug log
+    // console.log('Found and modified DOI:', doi); // Add debug log
 
     // Then update all other references to this DOI throughout the document
     $('#preview-content').find('*').contents().each(function() {
