@@ -41,7 +41,11 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
     timeout: 60000
   });
   
-  const doiLink = 'https://doi.org/' + meta.doi;
+  // Ensure we have a valid DOI
+  if (!meta.doi) {
+    console.warn('Warning: No DOI found for', htmlPath);
+  }
+  const doiLink = meta.doi ? 'https://doi.org/' + meta.doi : '';
   
   // const authorsHeader = meta.authors.length === 1 ? meta.authors[0] :
   //   meta.authors.length === 2 ? `${meta.authors[0]}, ${meta.authors[1]}` :
@@ -55,7 +59,8 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
    }
 
    const journalDate = meta.journalDate.replace(/-/g, ' ') || '';
-
+   
+   
   // First page options
   const firstPageOptions = {
     path: firstPagePdfPath,
@@ -141,14 +146,13 @@ async function convertToPdf(htmlPath, outputPdfPath, browser, meta) {
         ">
           ${authorsHeader}
         </span>
-        <a href="${doiLink}" style="
-          font-family: 'NewtonC';
+        <span style="
+          font-family: 'Newton-Regular', Arial !important;
           font-size: 11px;
           color: #000000;
-          text-decoration: none;
         ">
           ${doiLink}
-        </a>
+        </span>
       </div>
     `,
     footerTemplate: `

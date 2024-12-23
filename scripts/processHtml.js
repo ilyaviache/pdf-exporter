@@ -308,7 +308,7 @@ async function processHtml(inputPath, outputPath, imageFolderPath, browser) {
   // }
   // DOI SEARCH STARTS
   
-  let doi = '';
+  let doi = null;
 
   // Find first occurrence of DOI in any text node within #preview-content
   let doiNumber = null;
@@ -334,6 +334,7 @@ async function processHtml(inputPath, outputPath, imageFolderPath, browser) {
   if (doiNumber) {
     const modifiedDoi = doiNumber.slice(0, -4) + 'e' + doiNumber.slice(-3);
     doi = modifiedDoi; // Save for later use
+    console.log('Found and modified DOI:', doi); // Add debug log
 
     // Then update all other references to this DOI throughout the document
     $('#preview-content').find('*').contents().each(function() {
